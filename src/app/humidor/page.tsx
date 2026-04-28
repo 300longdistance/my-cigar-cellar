@@ -52,7 +52,7 @@ type SmokeLogDraft = {
 type SortOption = 'name' | 'qty' | 'favorites';
 type SortDirection = 'asc' | 'desc';
 
-const defaultHumidors = [];
+const defaultHumidors: string[] = [];
 
 const defaultCigars: Cigar[] = [];
 
