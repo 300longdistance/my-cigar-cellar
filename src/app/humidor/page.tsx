@@ -52,80 +52,9 @@ type SmokeLogDraft = {
 type SortOption = 'name' | 'qty' | 'favorites';
 type SortDirection = 'asc' | 'desc';
 
-const defaultHumidors = [
-  'Golf Simulator',
-  'Desktop Humidor',
-  'Cabinet',
-  'Travel Case',
-];
+const defaultHumidors = [];
 
-const defaultCigars: Cigar[] = [
-  {
-    id: 1,
-    name: 'VSG Sorcerer',
-    brand: 'Ashton',
-    humidor: 'Golf Simulator',
-    qty: 6,
-    origin: 'Dominican Republic',
-    wrapper: 'Ecuadorian Sumatra',
-    strength: 'Full',
-    size: '7 x 49',
-    notes: 'Rich cedar, espresso, leather, and black pepper.',
-    favorite: true,
-  },
-  {
-    id: 2,
-    name: 'Magnum R',
-    brand: 'H. Upmann',
-    humidor: 'Golf Simulator',
-    qty: 3,
-    origin: 'Dominican Republic',
-    wrapper: 'Ecuadorian',
-    strength: 'Medium',
-    size: '5 x 52',
-    notes: 'Creamy profile with toast, nuts, and soft spice.',
-    favorite: false,
-  },
-  {
-    id: 3,
-    name: 'Le Bijou 1922',
-    brand: 'My Father',
-    humidor: 'Desktop Humidor',
-    qty: 4,
-    origin: 'Nicaragua',
-    wrapper: 'Habano Oscuro',
-    strength: 'Full',
-    size: '5 5/8 x 55',
-    notes: 'Cocoa, earth, pepper, and dark coffee.',
-    favorite: false,
-  },
-  {
-    id: 4,
-    name: 'Alma Fuerte',
-    brand: 'Plasencia',
-    humidor: 'Cabinet',
-    qty: 3,
-    origin: 'Nicaragua',
-    wrapper: 'Nicaraguan',
-    strength: 'Full',
-    size: '6 x 60',
-    notes: 'Dense smoke with dark chocolate, oak, and spice.',
-    favorite: false,
-  },
-  {
-    id: 5,
-    name: 'Decade',
-    brand: 'Rocky Patel',
-    humidor: 'Travel Case',
-    qty: 9,
-    origin: 'Honduras',
-    wrapper: 'Sumatra',
-    strength: 'Medium-Full',
-    size: '6 1/2 x 52',
-    notes: 'Earth, roasted nuts, cedar, and subtle sweetness.',
-    favorite: false,
-  },
-];
+const defaultCigars: Cigar[] = [];
 
 const emptyForm = (humidor: string): FormState => ({
   name: '',
@@ -215,9 +144,9 @@ const FREE_TOTAL_CIGAR_LIMIT = 50;
 
 export default function HumidorPage() {
   const [humidors, setHumidors] = useState<string[]>(defaultHumidors);
-  const [cigars, setCigars] = useState<Cigar[]>(defaultCigars);
-  const [selectedHumidor, setSelectedHumidor] = useState<string>(defaultHumidors[0]);
-  const [selectedId, setSelectedId] = useState<number | null>(defaultCigars[0].id);
+const [cigars, setCigars] = useState<Cigar[]>(defaultCigars);
+const [selectedHumidor, setSelectedHumidor] = useState<string>(defaultHumidors[0] ?? '');
+const [selectedId, setSelectedId] = useState<number | null>(defaultCigars[0]?.id ?? null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 const [isHumidorDropdownOpen, setIsHumidorDropdownOpen] = useState(false);
 const [isNewCigarHumidorDropdownOpen, setIsNewCigarHumidorDropdownOpen] = useState(false);
@@ -260,7 +189,7 @@ const [limitMessage, setLimitMessage] = useState('');
   const [isAddHumidorOpen, setIsAddHumidorOpen] = useState(false);
   const [renamingHumidor, setRenamingHumidor] = useState<string | null>(null);
 
-  const [draftForm, setDraftForm] = useState<FormState>(emptyForm(defaultHumidors[0]));
+  const [draftForm, setDraftForm] = useState<FormState>(emptyForm(defaultHumidors[0] ?? ''));
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');

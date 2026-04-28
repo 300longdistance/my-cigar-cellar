@@ -150,7 +150,7 @@ export default function SmokeLogPage() {
   } = useCigarApp();
 
   const fallbackSelectedCigarId = cigars[0]?.id ?? 0;
-  const fallbackSelectedHumidor = cigars[0]?.humidor ?? 'Golf Simulator';
+  const fallbackSelectedHumidor = cigars[0]?.humidor ?? '';
 
   const [selectedHumidor, setSelectedHumidor] = useState<string>(fallbackSelectedHumidor);
 const [selectedCigarId, setSelectedCigarId] = useState<number>(fallbackSelectedCigarId);
@@ -164,7 +164,7 @@ const [saveError, setSaveError] = useState('');
   useEffect(() => {
     if (!Array.isArray(cigars) || cigars.length === 0) return;
 
-    let nextHumidor = cigars[0]?.humidor ?? 'Golf Simulator';
+    let nextHumidor = cigars[0]?.humidor ?? '';
     let nextCigarId = cigars[0]?.id ?? 0;
 
     if (quickLogSelection) {
@@ -214,7 +214,7 @@ const [saveError, setSaveError] = useState('');
 
   const humidorOptions = useMemo(() => {
     const options = [...new Set(cigars.map((cigar) => cigar.humidor))];
-    return options.length > 0 ? options : ['Golf Simulator'];
+    return options.length > 0 ? options : [];
   }, [cigars]);
 
   const cigarLastLoggedMap = useMemo(() => {

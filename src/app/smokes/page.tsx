@@ -44,69 +44,9 @@ type WishListItem = {
   priority: 'High' | 'Medium' | 'Low';
 };
 
-const fallbackCigars: StoredCigar[] = [
-  {
-    id: 1,
-    name: 'Decade Toro',
-    brand: 'Rocky Patel',
-    humidor: 'Golf Simulator',
-    qty: 4,
-    origin: 'Honduras',
-    wrapper: 'Sumatra',
-    strength: 'Medium-Full',
-    size: 'Toro',
-    notes: 'Earth, cedar, roasted nuts.',
-  },
-  {
-    id: 2,
-    name: 'Alma Fuerte Generacion V Salomon',
-    brand: 'Plasencia',
-    humidor: 'Golf Simulator',
-    qty: 2,
-    origin: 'Nicaragua',
-    wrapper: 'Nicaraguan Jalapa',
-    strength: 'Full',
-    size: 'Salomon',
-    notes: 'Dense smoke with dark chocolate and spice.',
-  },
-  {
-    id: 3,
-    name: 'Le Bijou 1922',
-    brand: 'My Father',
-    humidor: 'Desktop Humidor',
-    qty: 4,
-    origin: 'Nicaragua',
-    wrapper: 'Nicaraguan Habano Oscuro',
-    strength: 'Full',
-    size: 'Torpedo',
-    notes: 'Dark chocolate, espresso, leather, black pepper.',
-  },
-];
+const fallbackCigars: StoredCigar[] = [];
 
-const defaultWishList: WishListItem[] = [
-  {
-    id: 101,
-    name: 'Liga Privada No. 9',
-    brand: 'Drew Estate',
-    vitola: 'Toro',
-    wrapper: 'Connecticut Broadleaf Oscuro',
-    origin: 'Nicaragua',
-    strength: 'Full',
-    notes: 'Want to compare against current fuller-bodied favorites.',
-    priority: 'High',
-  },
-  {
-    id: 102,
-    name: 'Fuente Fuente OpusX',
-    brand: 'Arturo Fuente',
-    vitola: 'Belicoso',
-    wrapper: 'Dominican',
-    origin: 'Dominican Republic',
-    strength: 'Full',
-    notes: 'Need a few benchmark OpusX sticks in the journal.',
-    priority: 'Medium',
-  },
-];
+const defaultWishList: WishListItem[] = [];
 
 const emptyWishItem: WishListItem = {
   id: 0,
@@ -139,10 +79,15 @@ export default function SmokesPage() {
   const [savedMessage, setSavedMessage] = useState('');
 
   const [wishList, setWishList] = useState<WishListItem[]>(defaultWishList);
-const [selectedWishId, setSelectedWishId] = useState<number | null>(defaultWishList[0].id);
-const [wishDraft, setWishDraft] = useState<WishListItem>(defaultWishList[0]);
+const [selectedWishId, setSelectedWishId] = useState<number | null>(
+  defaultWishList[0]?.id ?? null
+);
+
+const [wishDraft, setWishDraft] = useState<WishListItem>(
+  defaultWishList[0] ?? emptyWishItem
+);
 const [wishMessage, setWishMessage] = useState('');
-const [moveToHumidor, setMoveToHumidor] = useState<string>('Golf Simulator');
+const [moveToHumidor, setMoveToHumidor] = useState<string>();
 
   useEffect(() => {
     const savedCigars = localStorage.getItem('cigars');
@@ -155,7 +100,7 @@ const [moveToHumidor, setMoveToHumidor] = useState<string>('Golf Simulator');
     const parsed = JSON.parse(savedCigars) as StoredCigar[];
     if (Array.isArray(parsed) && parsed.length > 0) {
       setCigars(parsed);
-      setMoveToHumidor(parsed[0]?.humidor ?? 'Golf Simulator');
+      setMoveToHumidor(parsed[0]?.humidor ?? '');
     }
   } catch (error) {
     console.error('Failed to load cigars:', error);
@@ -223,7 +168,7 @@ const selectedWish = useMemo(() => {
 
   const humidorOptions = useMemo(() => {
   const names = [...new Set(cigars.map((cigar) => cigar.humidor).filter(Boolean))];
-  return names.length > 0 ? names : ['Golf Simulator'];
+  return names.length > 0 ? names : [];
 }, [cigars]);
 
   useEffect(() => {
@@ -277,9 +222,14 @@ const selectedWish = useMemo(() => {
     return;
   }
 
-  const targetHumidor = moveToHumidor || humidorOptions[0] || 'Golf Simulator';
+  const targetHumidor = moveToHumidor || humidorOptions[0] || '';
 
-  const newCigar = {
+if (!targetHumidor) {
+  setWishMessage('Select or create a humidor first.');
+  return;
+}
+
+const newCigar = {
   id: Date.now(),
   name: trimmedName,
   brand: trimmedBrand || 'Unknown Brand',

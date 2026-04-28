@@ -75,72 +75,9 @@ type CigarAppContextValue = {
   refreshFromStorage: () => void;
 };
 
-const fallbackCigars: StoredCigar[] = [
-  {
-    id: 1,
-    name: 'VSG Sorcerer',
-    brand: 'Ashton',
-    humidor: 'Golf Simulator',
-    qty: 6,
-    origin: 'Dominican Republic',
-    wrapper: 'Ecuadorian Sumatra',
-    strength: 'Full',
-    size: '7 x 49',
-    notes: 'Rich cedar, espresso, leather, and black pepper.',
-    favorite: true,
-  },
-  {
-    id: 2,
-    name: 'Magnum R',
-    brand: 'H. Upmann',
-    humidor: 'Golf Simulator',
-    qty: 3,
-    origin: 'Dominican Republic',
-    wrapper: 'Ecuadorian',
-    strength: 'Medium',
-    size: '5 x 52',
-    notes: 'Creamy profile with toast, nuts, and soft spice.',
-    favorite: false,
-  },
-  {
-    id: 3,
-    name: 'Le Bijou 1922',
-    brand: 'My Father',
-    humidor: 'Desktop Humidor',
-    qty: 4,
-    origin: 'Nicaragua',
-    wrapper: 'Habano Oscuro',
-    strength: 'Full',
-    size: '5 5/8 x 55',
-    notes: 'Cocoa, earth, pepper, and dark coffee.',
-    favorite: false,
-  },
-];
+const fallbackCigars: StoredCigar[] = [];
 
-const defaultWishList: WishListItem[] = [
-  {
-    id: 101,
-    name: 'Liga Privada No. 9',
-    brand: 'Drew Estate',
-    vitola: 'Toro',
-    wrapper: 'Connecticut Broadleaf Oscuro',
-    origin: 'Nicaragua',
-    strength: 'Full',
-    notes: 'Want to compare against current fuller-bodied favorites.',
-    priority: 'High',
-  },
-  {
-    id: 102,
-    name: 'Fuente Fuente OpusX',
-    brand: 'Arturo Fuente',
-    vitola: 'Belicoso',
-    wrapper: 'Dominican',
-    origin: 'Dominican Republic',
-    strength: 'Full',
-    notes: 'Need a few benchmark OpusX sticks in the journal.',
-    priority: 'Medium',
-  },
-];
+const defaultWishList: WishListItem[] = [];
 
 const defaultPairingTypes: PairingType[] = [
   { id: 201, name: 'My favorite coffee', category: 'Coffee' },
@@ -148,32 +85,7 @@ const defaultPairingTypes: PairingType[] = [
   { id: 203, name: 'Bold bourbon', category: 'Bourbon' },
 ];
 
-const defaultPairingLogs: PairingLog[] = [
-  {
-    id: 301,
-    pairingTypeId: 201,
-    cigarId: 1,
-    rating: 5.0,
-    notes: 'Excellent espresso and cedar balance.',
-    pairedAt: '2026-04-05T18:00:00.000Z',
-  },
-  {
-    id: 302,
-    pairingTypeId: 202,
-    cigarId: 2,
-    rating: 4.8,
-    notes: 'Nice sweetness against a creamy profile.',
-    pairedAt: '2026-04-05T19:00:00.000Z',
-  },
-  {
-    id: 303,
-    pairingTypeId: 203,
-    cigarId: 3,
-    rating: 5.0,
-    notes: 'Dark, rich pairing with strong coffee notes.',
-    pairedAt: '2026-04-05T20:00:00.000Z',
-  },
-];
+const defaultPairingLogs: PairingLog[] = [];
 
 const CigarAppContext = createContext<CigarAppContextValue | null>(null);
 
@@ -190,7 +102,7 @@ function safeParse<T>(value: string | null, fallback: T): T {
 
 export function CigarAppProvider({ children }: { children: ReactNode }) {
     const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
-  const [cigars, setCigars] = useState<StoredCigar[]>(fallbackCigars);
+  const [cigars, setCigars] = useState<StoredCigar[]>([]);
   const [smokeLogs, setSmokeLogs] = useState<SmokeLogEntry[]>([]);
   const [reflections, setReflections] = useState<ReflectionDrafts>({});
   const [wishList, setWishList] = useState<WishListItem[]>(defaultWishList);
@@ -234,11 +146,8 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
       null
     );
 
-    setCigars(
-      Array.isArray(storedCigars) && storedCigars.length > 0
-        ? storedCigars
-        : fallbackCigars
-    );
+    setCigars(Array.isArray(storedCigars) ? storedCigars : []);
+    
     setSmokeLogs(Array.isArray(storedSmokeLogs) ? storedSmokeLogs : []);
     setReflections(
       storedReflections && typeof storedReflections === 'object'
