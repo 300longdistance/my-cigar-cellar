@@ -245,8 +245,7 @@ const newCigar = {
 };
 
   const nextCigars = [newCigar, ...cigars];
-  setCigars(nextCigars);
-  localStorage.setItem('cigars', JSON.stringify(nextCigars));
+setCigars(nextCigars);
 
   const nextWishList = wishList.filter((item) => item.id !== selectedWish.id);
   setWishList(nextWishList);

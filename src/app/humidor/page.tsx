@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useCigarApp } from '@/context/CigarAppContext';
 
 type Cigar = {
   id: number;
@@ -144,7 +145,7 @@ const FREE_TOTAL_CIGAR_LIMIT = 50;
 
 export default function HumidorPage() {
   const [humidors, setHumidors] = useState<string[]>(defaultHumidors);
-const [cigars, setCigars] = useState<Cigar[]>(defaultCigars);
+const { cigars, setCigars } = useCigarApp();
 const [selectedHumidor, setSelectedHumidor] = useState<string>(defaultHumidors[0] ?? '');
 const [selectedId, setSelectedId] = useState<number | null>(defaultCigars[0]?.id ?? null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -320,6 +321,9 @@ const editCigarOriginRef = useRef<HTMLInputElement | null>(null);
       .filter((cigar) => cigar.humidor === selectedHumidor)
       .reduce((sum, cigar) => sum + cigar.qty, 0);
   }, [cigars, selectedHumidor]);
+const totalCigarsOnHand = useMemo(() => {
+  return cigars.reduce((sum, cigar) => sum + cigar.qty, 0);
+}, [cigars]);
 
   const filteredCigarsByHumidor = useMemo(() => {
     return cigars.filter((cigar) => cigar.humidor === selectedHumidor);
@@ -389,11 +393,11 @@ const editCigarOriginRef = useRef<HTMLInputElement | null>(null);
 }, [smokeLogs, selectedCigar]);
 
   // ---------- KNOWN DATA HELPERS ----------
-function uniqueSortedValues(values: string[]) {
+function uniqueSortedValues(values: Array<string | undefined>) {
   return Array.from(
     new Set(
       values
-        .map((value) => value.trim())
+        .map((value) => value?.trim() ?? '')
         .filter(Boolean)
     )
   ).sort((a, b) => a.localeCompare(b));
@@ -671,17 +675,17 @@ useEffect(() => {
   if (isCreatingNew || !selectedCigar) return;
 
   setDraftForm({
-    name: selectedCigar.name,
-    brand: selectedCigar.brand,
-    humidor: selectedCigar.humidor,
-    qty: selectedCigar.qty,
-    origin: selectedCigar.origin,
-    wrapper: selectedCigar.wrapper,
-    strength: selectedCigar.strength,
-    size: selectedCigar.size,
-    notes: selectedCigar.notes,
-    image: selectedCigar.image,
-  });
+  name: selectedCigar.name,
+  brand: selectedCigar.brand,
+  humidor: selectedCigar.humidor,
+  qty: selectedCigar.qty,
+  origin: selectedCigar.origin ?? '',
+  wrapper: selectedCigar.wrapper ?? '',
+  strength: selectedCigar.strength ?? '',
+  size: selectedCigar.size ?? '',
+  notes: selectedCigar.notes ?? '',
+  image: selectedCigar.image,
+});
   setIsDeleteConfirmOpen(false);
 }, [selectedCigar, isCreatingNew]);
 
@@ -792,12 +796,12 @@ useEffect(() => {
   }
 
   function startCreatingNewCigar() {
-  if (cigars.length >= FREE_TOTAL_CIGAR_LIMIT) {
-    setLimitMessage(
-      `Free version supports up to ${FREE_TOTAL_CIGAR_LIMIT} total cigars. Delete a cigar or upgrade to Pro when available.`
-    );
-    return;
-  }
+  if (totalCigarsOnHand + Math.max(1, draftForm.qty || 1) > FREE_TOTAL_CIGAR_LIMIT) {
+  setLimitMessage(
+    `Free version supports up to ${FREE_TOTAL_CIGAR_LIMIT} total cigars on hand. Lower the quantity, remove cigars, or upgrade to Pro when available.`
+  );
+  return;
+}
 
   setLimitMessage('');
   setIsCreatingNew(true);
@@ -812,17 +816,17 @@ useEffect(() => {
 
     if (selectedCigar) {
       setDraftForm({
-        name: selectedCigar.name,
-        brand: selectedCigar.brand,
-        humidor: selectedCigar.humidor,
-        qty: selectedCigar.qty,
-        origin: selectedCigar.origin,
-        wrapper: selectedCigar.wrapper,
-        strength: selectedCigar.strength,
-        size: selectedCigar.size,
-        notes: selectedCigar.notes,
-        image: selectedCigar.image,
-      });
+  name: selectedCigar.name,
+  brand: selectedCigar.brand,
+  humidor: selectedCigar.humidor,
+  qty: selectedCigar.qty,
+  origin: selectedCigar.origin ?? '',
+  wrapper: selectedCigar.wrapper ?? '',
+  strength: selectedCigar.strength ?? '',
+  size: selectedCigar.size ?? '',
+  notes: selectedCigar.notes ?? '',
+  image: selectedCigar.image,
+});
     } else if (filteredCigarsByHumidor.length > 0) {
       setSelectedId(filteredCigarsByHumidor[0].id);
     } else {
@@ -838,12 +842,12 @@ useEffect(() => {
   if (!trimmedName) return;
   if (!nextHumidor) return;
 
-  if (cigars.length >= FREE_TOTAL_CIGAR_LIMIT) {
-    setLimitMessage(
-      `Free version supports up to ${FREE_TOTAL_CIGAR_LIMIT} total cigars. Delete a cigar or upgrade to Pro when available.`
-    );
-    return;
-  }
+  if (totalCigarsOnHand >= FREE_TOTAL_CIGAR_LIMIT) {
+  setLimitMessage(
+    `Free version supports up to ${FREE_TOTAL_CIGAR_LIMIT} total cigars on hand. Remove cigars or upgrade to Pro when available.`
+  );
+  return;
+}
 
   const isNewHumidor = !humidors.includes(nextHumidor);
 
@@ -1011,9 +1015,9 @@ useEffect(() => {
   }
 
   function openDeleteConfirm() {
-    if (!selectedCigar || filteredCigarsByHumidor.length <= 1 || isCreatingNew) return;
-    setIsDeleteConfirmOpen(true);
-  }
+  if (!selectedCigar || isCreatingNew) return;
+  setIsDeleteConfirmOpen(true);
+}
 
   function closeDeleteConfirm() {
   setIsDeleteConfirmOpen(false);
@@ -1274,8 +1278,7 @@ function confirmRemoveSelectedCigar() {
     }
   }
 
-  const deleteDisabled =
-    isCreatingNew || !selectedCigar || filteredCigarsByHumidor.length <= 1;
+  const deleteDisabled = isCreatingNew || !selectedCigar;
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -1363,11 +1366,141 @@ function confirmRemoveSelectedCigar() {
 <div className="mt-2 text-[13px] text-white/45">
   {totalCigarsInSelectedHumidor} cigars in this humidor
 </div>
+<button
+  type="button"
+  onClick={() => setIsManageHumidorsOpen((current) => !current)}
+  className="mt-2 flex w-full items-center justify-between text-left text-[12px] text-white/55 transition hover:text-[#c8882d]"
+>
+  <span>Add / Manage Humidors</span>
+  <span className="text-[14px]">{isManageHumidorsOpen ? '⌃' : '⌄'}</span>
+</button>
 
+{isManageHumidorsOpen && (
+  <div className="mt-2 space-y-2">
+    <button
+      type="button"
+      onClick={() => setIsAddHumidorOpen((current) => !current)}
+      className="flex w-full items-center gap-2 rounded-[12px] bg-[#1b1d22] px-3 py-2.5 text-left transition hover:bg-[#20232a]"
+    >
+      <span className="text-[18px] leading-none text-white/85">+</span>
+      <span className="text-[12px] text-white">Add Humidor</span>
+    </button>
+
+    {isAddHumidorOpen && (
+      <div className="rounded-[12px] bg-[#1b1d22] px-3 py-3">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newHumidorName}
+            onChange={(event) => setNewHumidorName(event.target.value)}
+            placeholder="New humidor name"
+            className="min-w-0 flex-1 rounded-[10px] border border-[#2d210d] bg-[#0d0f12] px-3 py-2 text-[12px] text-white outline-none placeholder:text-white/25 focus:border-[#c8882d]/60"
+          />
+          <button
+            type="button"
+            onClick={addHumidor}
+            className="rounded-[10px] bg-[#c8882d] px-3 py-2 text-[12px] text-white transition hover:brightness-110"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+    )}
+
+    {humidors.map((humidor) => {
+      const isActive = humidor === selectedHumidor;
+      const count = humidorCount(humidor);
+      const isRenaming = renamingHumidor === humidor;
+      const canDelete = humidors.length > 1;
+
+      return (
+        <div
+          key={humidor}
+          className="rounded-[12px] bg-[#1b1d22] px-3 py-2.5"
+        >
+          {isRenaming ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={renameHumidorName}
+                onChange={(event) => setRenameHumidorName(event.target.value)}
+                className="w-full rounded-[10px] border border-[#2d210d] bg-[#0d0f12] px-3 py-2 text-[12px] text-white outline-none focus:border-[#c8882d]/60"
+              />
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={saveRenamedHumidor}
+                  className="flex-1 rounded-[10px] bg-[#c8882d] px-3 py-2 text-[12px] text-white transition hover:brightness-110"
+                >
+                  Save
+                </button>
+
+                <button
+                  type="button"
+                  onClick={cancelRenameHumidor}
+                  className="flex-1 rounded-[10px] border border-white/10 bg-[#121316] px-3 py-2 text-[12px] text-white/75 transition hover:bg-[#17191d] hover:text-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedHumidor(humidor);
+                  setIsCreatingNew(false);
+                }}
+                className="min-w-0 flex-1 text-left"
+              >
+                <div className="truncate text-[13px] text-white">
+                  {humidor}
+                </div>
+
+                <div className="mt-0.5 text-[10px] text-white/45">
+                  {count} cigars
+                </div>
+              </button>
+
+              <div className="flex shrink-0 items-center gap-2">
+                {isActive && (
+                  <span className="text-[11px] font-medium text-[#d58a24]">
+                    Active
+                  </span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => startRenameHumidor(humidor)}
+                  className="text-[14px] text-[#d58a24] transition hover:text-[#f0d78a]"
+                  aria-label={`Rename ${humidor}`}
+                >
+                  ✎
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => deleteHumidor(humidor)}
+                  disabled={!canDelete}
+                  className="text-[15px] text-red-400 transition hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label={`Delete ${humidor}`}
+                >
+                  🗑
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+)}
 <div className="mt-3 rounded-[14px] border border-[#3a2a0f] bg-[linear-gradient(135deg,#101114_0%,#15171c_100%)] px-3 py-2.5">
   <div className="flex items-center justify-between gap-3 text-[11px] text-white/55">
     <span>Free Plan</span>
-    <span>{cigars.length}/{FREE_TOTAL_CIGAR_LIMIT} cigars</span>
+    <span>{totalCigarsOnHand}/{FREE_TOTAL_CIGAR_LIMIT} cigars</span>
     <div className="mt-2 text-[10px] text-[#c8882d]/80 tracking-wide">
   Upgrade to Pro for unlimited cigars & humidors
 </div>
@@ -1625,135 +1758,6 @@ function confirmRemoveSelectedCigar() {
                     </div>
                   )}
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsManageHumidorsOpen((current) => !current)}
-                  className="mt-4 flex w-full items-center justify-between text-left text-[14px] text-[#d58a24] transition hover:text-[#e29b3d]"
-                >
-                  <span>Manage Humidors</span>
-                  <span className="text-[18px]">{isManageHumidorsOpen ? '⌃' : '⌄'}</span>
-                </button>
-
-                {isManageHumidorsOpen && (
-                  <div className="mt-3 space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => setIsAddHumidorOpen((current) => !current)}
-                      className="flex w-full items-center gap-3 rounded-[18px] bg-[#1b1d22] px-4 py-4 text-left transition hover:bg-[#20232a]"
-                    >
-                      <span className="text-[28px] leading-none text-white/90">+</span>
-                      <span className="text-[15px] text-white">Add Humidor</span>
-                    </button>
-
-                    {isAddHumidorOpen && (
-                      <div className="rounded-[18px] bg-[#1b1d22] px-4 py-4">
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={newHumidorName}
-                            onChange={(event) => setNewHumidorName(event.target.value)}
-                            placeholder="New humidor name"
-                            className="flex-1 rounded-[12px] border border-[#2d210d] bg-[#0d0f12] px-3 py-2.5 text-[13px] text-white outline-none placeholder:text-white/25 focus:border-[#c8882d]/60"
-                          />
-                          <button
-                            type="button"
-                            onClick={addHumidor}
-                            className="rounded-[12px] bg-[#c8882d] px-4 py-2.5 text-[13px] text-white transition hover:brightness-110"
-                          >
-                            Add
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {humidors.map((humidor) => {
-                      const isActive = humidor === selectedHumidor;
-                      const count = humidorCount(humidor);
-                      const isRenaming = renamingHumidor === humidor;
-                      const canDelete = humidors.length > 1;
-
-                      return (
-                        <div
-                          key={humidor}
-                          className="rounded-[18px] bg-[#1b1d22] px-4 py-4"
-                        >
-                          {isRenaming ? (
-                            <div className="space-y-3">
-                              <input
-                                type="text"
-                                value={renameHumidorName}
-                                onChange={(event) => setRenameHumidorName(event.target.value)}
-                                className="w-full rounded-[12px] border border-[#2d210d] bg-[#0d0f12] px-3 py-2.5 text-[13px] text-white outline-none focus:border-[#c8882d]/60"
-                              />
-                              <div className="flex gap-2">
-                                <button
-                                  type="button"
-                                  onClick={saveRenamedHumidor}
-                                  className="flex-1 rounded-[12px] bg-[#c8882d] px-3 py-2.5 text-[13px] text-white transition hover:brightness-110"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={cancelRenameHumidor}
-                                  className="flex-1 rounded-[12px] border border-white/10 bg-[#121316] px-3 py-2.5 text-[13px] text-white/75 transition hover:bg-[#17191d] hover:text-white"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-between gap-3">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedHumidor(humidor);
-                                  setIsCreatingNew(false);
-                                }}
-                                className="min-w-0 flex-1 text-left"
-                              >
-                                <div className="truncate text-[15px] text-white">
-                                  {humidor}
-                                </div>
-                                <div className="mt-1 text-[11px] text-white/45">
-                                  {count} cigars
-                                </div>
-                              </button>
-
-                              <div className="flex items-center gap-3 shrink-0">
-                                {isActive && (
-                                  <span className="text-[13px] font-medium text-[#d58a24]">
-                                    Active
-                                  </span>
-                                )}
-
-                                <button
-                                  type="button"
-                                  onClick={() => startRenameHumidor(humidor)}
-                                  className="text-[18px] text-[#d58a24] transition hover:text-[#f0d78a]"
-                                  aria-label={`Rename ${humidor}`}
-                                >
-                                  ✎
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => deleteHumidor(humidor)}
-                                  disabled={!canDelete}
-                                  className="text-[20px] text-red-400 transition hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
-                                  aria-label={`Delete ${humidor}`}
-                                >
-                                  🗑
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             </div>
           </aside>
@@ -2020,16 +2024,10 @@ function confirmRemoveSelectedCigar() {
 
   <div
     className={`text-[18px] ${
-      !selectedCigar
-        ? 'text-white/50'
-        : selectedCigar.qty === 0
-          ? 'text-red-400'
-          : selectedCigar.qty <= 2
-            ? 'text-yellow-300'
-            : 'text-[#d58a24]'
+      draftForm.qty <= 2 ? 'text-yellow-300' : 'text-[#d58a24]'
     }`}
   >
-    {selectedCigar?.qty ?? 0}
+    {draftForm.qty}
   </div>
 </div>
 
@@ -3683,13 +3681,22 @@ function confirmRemoveSelectedCigar() {
 </div>
 
                     <button
-                      type="button"
-                      onClick={() => updateQty(selectedCigar.id, 1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#c8882d] text-[18px] text-white transition hover:brightness-110"
-                      aria-label="Increase quantity"
-                    >
-                      +
-                    </button>
+  type="button"
+  onClick={() => {
+    if (totalCigarsOnHand >= FREE_TOTAL_CIGAR_LIMIT) {
+      setLimitMessage(
+        `Free version supports up to ${FREE_TOTAL_CIGAR_LIMIT} total cigars on hand. Remove cigars or upgrade to Pro when available.`
+      );
+      return;
+    }
+
+    updateQty(selectedCigar.id, 1);
+  }}
+  className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#c8882d] text-[18px] text-white transition hover:brightness-110"
+  aria-label="Increase quantity"
+>
+  +
+</button>
                   </div>
                 </div>
 

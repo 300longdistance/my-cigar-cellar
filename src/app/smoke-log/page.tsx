@@ -231,29 +231,34 @@ const [saveError, setSaveError] = useState('');
   }, [smokeLogs]);
 
   const cigarsInHumidor = useMemo(() => {
-    const filtered = cigars.filter((cigar) => cigar.humidor === selectedHumidor);
+  const filtered = cigars
+    .filter((cigar) => cigar.humidor === selectedHumidor)
+    .map((cigar) => ({
+      ...cigar,
+      qty: typeof cigar.qty === 'number' ? cigar.qty : 0,
+    }));
 
-    return [...filtered].sort((a, b) => {
-      const favoriteA = a.favorite ? 1 : 0;
-      const favoriteB = b.favorite ? 1 : 0;
+  return [...filtered].sort((a, b) => {
+    const favoriteA = a.favorite ? 1 : 0;
+    const favoriteB = b.favorite ? 1 : 0;
 
-      if (favoriteA !== favoriteB) {
-        return favoriteB - favoriteA;
-      }
+    if (favoriteA !== favoriteB) {
+      return favoriteB - favoriteA;
+    }
 
-      const lastA = cigarLastLoggedMap.get(a.id);
-      const lastB = cigarLastLoggedMap.get(b.id);
+    const lastA = cigarLastLoggedMap.get(a.id);
+    const lastB = cigarLastLoggedMap.get(b.id);
 
-      if (lastA && lastB) {
-        return new Date(lastB).getTime() - new Date(lastA).getTime();
-      }
+    if (lastA && lastB) {
+      return new Date(lastB).getTime() - new Date(lastA).getTime();
+    }
 
-      if (lastA) return -1;
-      if (lastB) return 1;
+    if (lastA) return -1;
+    if (lastB) return 1;
 
-      return a.name.localeCompare(b.name);
-    });
-  }, [cigars, selectedHumidor, cigarLastLoggedMap]);
+    return a.name.localeCompare(b.name);
+  });
+}, [cigars, selectedHumidor, cigarLastLoggedMap]);
 
   const selectedCigar = useMemo(() => {
     return (
