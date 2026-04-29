@@ -93,7 +93,7 @@ export default function HomePage() {
         </header>
 
         <section className="mt-3 w-full">
-          <div className="mx-auto w-[145vw] max-w-none sm:w-full sm:max-w-4xl">
+          <div className="mx-auto w-[140vw] max-w-none sm:w-full sm:max-w-4xl">
             <div className="relative aspect-4/5 w-full bg-black">
               <Image
                 src="/images/main-home.png"
