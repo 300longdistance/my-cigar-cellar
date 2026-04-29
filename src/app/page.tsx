@@ -99,7 +99,7 @@ export default function HomePage() {
                 src="/images/main-home.png"
                 alt="My Cigar Cellar main scene"
                 fill
-                className="object-contain"
+                className="object-cover object-[center_45%] sm:object-contain"
                 priority
               />
 
