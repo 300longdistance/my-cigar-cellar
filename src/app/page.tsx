@@ -179,7 +179,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="mt-4 w-full text-center">
+                <section className="mt-2 w-full text-center">
           <div className="mx-auto mb-5 h-px w-full max-w-2xl bg-stone-800" />
 
           <p className="text-xl text-stone-300 md:text-2xl">
