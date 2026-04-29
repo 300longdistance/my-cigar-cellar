@@ -86,8 +86,8 @@ export default function HomePage() {
           </p>
 
           <p className="mt-2 text-2xl font-semibold text-white md:text-4xl">
-            Golf Simulator • 25 Cigars
-          </p>
+  Start Your First Humidor
+</p>
 
           <div className="mx-auto mt-5 h-px w-full max-w-2xl bg-stone-800" />
         </header>
@@ -186,9 +186,9 @@ export default function HomePage() {
             Recently Smoked
           </p>
 
-          <p className="mt-2 text-2xl font-semibold text-white md:text-4xl">
-            Decade Toro
-          </p>
+         <p className="mt-2 text-2xl font-semibold text-white md:text-4xl">
+  No Recent Smokes
+</p>
         </section>
       </div>
     </main>
