@@ -62,3 +62,69 @@ select {
     font-size: 17px;
   }
 }
+/* Humidor phone readability only */
+@media (max-width: 640px) {
+  .humidor-phone-readable {
+    font-size: 18px;
+  }
+
+  .humidor-phone-readable aside,
+  .humidor-phone-readable section {
+    border-radius: 18px;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+
+  .humidor-phone-readable .text-\[10px\] {
+    font-size: 12px;
+  }
+
+  .humidor-phone-readable .text-\[11px\],
+  .humidor-phone-readable .text-\[11\.5px\] {
+    font-size: 13px;
+  }
+
+  .humidor-phone-readable .text-\[12px\] {
+    font-size: 14px;
+  }
+
+  .humidor-phone-readable .text-\[13px\] {
+    font-size: 15px;
+  }
+
+  .humidor-phone-readable .text-\[14px\],
+  .humidor-phone-readable .text-\[14\.5px\] {
+    font-size: 16px;
+  }
+
+  .humidor-phone-readable .text-\[15px\] {
+    font-size: 17px;
+  }
+
+  .humidor-phone-readable .text-\[16px\] {
+    font-size: 18px;
+  }
+
+  .humidor-phone-readable .text-\[18px\] {
+    font-size: 21px;
+  }
+
+  .humidor-phone-readable .text-\[20px\] {
+    font-size: 23px;
+  }
+
+  .humidor-phone-readable .text-\[22px\] {
+    font-size: 25px;
+  }
+
+  .humidor-phone-readable input,
+  .humidor-phone-readable textarea,
+  .humidor-phone-readable button {
+    min-height: 44px;
+  }
+
+  .humidor-phone-readable input,
+  .humidor-phone-readable textarea {
+    line-height: 1.35;
+  }
+}
