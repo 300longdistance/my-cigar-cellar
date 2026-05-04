@@ -15,6 +15,15 @@ body {
   font-family: var(--font-inter), sans-serif;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -23,8 +32,32 @@ a {
   color: inherit;
   text-decoration: none;
 }
-/* Slightly increase base font size on mobile only */
+
+/* Better iPhone/iPad tap behavior */
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* iPhone text readability */
 @media (max-width: 640px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+/* iPad portrait */
+@media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
+  html {
+    font-size: 18px;
+  }
+}
+
+/* iPad landscape */
+@media (min-width: 900px) and (orientation: landscape) {
   html {
     font-size: 17px;
   }
