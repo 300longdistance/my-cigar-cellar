@@ -26,6 +26,6 @@ a {
 /* Slightly increase base font size on mobile only */
 @media (max-width: 640px) {
   html {
-    font-size: 16.5px;
+    font-size: 17px;
   }
 }
