@@ -1,73 +1,50 @@
 import { auth, db } from '@/lib/firebase';
 import {
-  collection,
   doc,
-  getDocs,
+  getDoc,
   onSnapshot,
   setDoc,
-  deleteDoc,
 } from 'firebase/firestore';
 
 export function getUserId() {
   return auth.currentUser?.uid ?? null;
 }
 
-export function userCollection(collectionName: string) {
+export function userAppDataDocument() {
   const userId = getUserId();
 
   if (!userId) {
     throw new Error('User is not logged in.');
   }
 
-  return collection(db, 'users', userId, collectionName);
+  return doc(db, 'users', userId, 'appData', 'main');
 }
 
-export function userDocument(collectionName: string, documentId: string) {
-  const userId = getUserId();
-
-  if (!userId) {
-    throw new Error('User is not logged in.');
-  }
-
-  return doc(db, 'users', userId, collectionName, documentId);
-}
-
-export async function saveUserDocument<T extends object>(
-  collectionName: string,
-  documentId: string,
-  data: T
-) {
-  await setDoc(userDocument(collectionName, documentId), data, {
+export async function saveUserAppData<T extends object>(data: T) {
+  await setDoc(userAppDataDocument(), data, {
     merge: true,
   });
 }
 
-export async function deleteUserDocument(
-  collectionName: string,
-  documentId: string
-) {
-  await deleteDoc(userDocument(collectionName, documentId));
+export async function getUserAppData<T>() {
+  const snapshot = await getDoc(userAppDataDocument());
+
+  if (!snapshot.exists()) {
+    return null;
+  }
+
+  return snapshot.data() as T;
 }
 
-export async function getUserCollection<T>(collectionName: string) {
-  const snapshot = await getDocs(userCollection(collectionName));
-
-  return snapshot.docs.map((docSnapshot) => ({
-    id: docSnapshot.id,
-    ...docSnapshot.data(),
-  })) as T[];
-}
-
-export function subscribeToUserCollection<T>(
-  collectionName: string,
-  onData: (items: T[]) => void
+export function subscribeToUserAppData<T>(
+  onData: (data: T | null) => void
 ) {
-  return onSnapshot(userCollection(collectionName), (snapshot) => {
-    const items = snapshot.docs.map((docSnapshot) => ({
-      id: docSnapshot.id,
-      ...docSnapshot.data(),
-    })) as T[];
+  return onSnapshot(userAppDataDocument(), (snapshot) => {
+    if (!snapshot.exists()) {
+      onData(null);
+      return;
+    }
 
-    onData(items);
+    onData(snapshot.data() as T);
   });
 }
