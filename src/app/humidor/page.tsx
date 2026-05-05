@@ -1619,15 +1619,15 @@ function confirmRemoveSelectedCigar() {
     setSelectedId(cigar.id);
   }}
   onKeyDown={(event) => handleCardKeyDown(event, cigar.id)}
-  className={`group block w-full cursor-pointer rounded-[18px] px-3 py-2.5 text-left transition duration-150 ${
-  isSelected
-    ? 'bg-[#1b1d22] ring-1 ring-[#c8882d]/45 shadow-[0_0_0_1px_rgba(200,136,45,0.25)]'
-    : 'bg-[#16181c] hover:bg-[#1a1d22]'
-} ${cigar.qty === 0 ? 'opacity-60' : ''}`}
+  className={`group block w-full cursor-pointer rounded-[20px] border px-3.5 py-3.5 text-left transition duration-150 ${
+    isSelected
+      ? 'border-[#c8882d]/45 bg-[#1b1d22] shadow-[0_0_0_1px_rgba(200,136,45,0.25),0_12px_28px_rgba(0,0,0,0.28)]'
+      : 'border-white/5 bg-[#16181c] hover:border-[#c8882d]/25 hover:bg-[#1a1d22]'
+  } ${cigar.qty === 0 ? 'opacity-65' : ''}`}
   aria-pressed={isSelected}
 >
-  <div className="flex items-center gap-3">
-    <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-white">
+  <div className="flex items-center gap-3.5">
+    <div className="flex h-[64px] w-[64px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-white">
       {cigar.image ? (
         <img
           src={cigar.image}
@@ -1635,39 +1635,43 @@ function confirmRemoveSelectedCigar() {
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="h-[44px] w-[11px] rounded-full bg-gradient-to-b from-[#6d4a2c] to-[#5d3c22]" />
+        <div className="h-[48px] w-[12px] rounded-full bg-gradient-to-b from-[#6d4a2c] to-[#5d3c22]" />
       )}
     </div>
 
     <div className="min-w-0 flex-1">
-      <div className="truncate text-[14.5px] font-medium text-white">
-        {cigar.name}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-[15.5px] font-semibold leading-tight text-white">
+            {cigar.name}
+          </div>
+
+          <div className="mt-1 truncate text-[12.5px] text-white/60">
+            {cigar.brand}
+          </div>
+        </div>
+
+        <div
+          className={`shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-medium ${
+            cigar.qty === 0
+              ? 'bg-red-500/10 text-red-400 ring-1 ring-red-400/25'
+              : cigar.qty <= 2
+                ? 'bg-yellow-400/10 text-yellow-300 ring-1 ring-yellow-300/25'
+                : 'bg-[#c8882d]/10 text-[#d58a24] ring-1 ring-[#c8882d]/25'
+          }`}
+        >
+          {cigar.qty === 0
+            ? 'Out'
+            : cigar.qty <= 2
+              ? `Low ×${cigar.qty}`
+              : `×${cigar.qty}`}
+        </div>
       </div>
 
-      <div className="mt-[2px] truncate text-[12px] text-white/60">
-        {cigar.brand}
-      </div>
-
-      <div className="mt-[4px] flex items-center justify-between text-[11.5px] text-white/45">
+      <div className="mt-2 flex items-center gap-2 text-[11.5px] text-white/45">
         <span className="truncate">
-          {[cigar.wrapper, cigar.size].filter(Boolean).join(' • ')}
+          {[cigar.wrapper, cigar.size].filter(Boolean).join(' • ') || 'No wrapper or size set'}
         </span>
-
-        <span
-  className={`ml-2 ${
-    cigar.qty === 0
-      ? 'text-red-400'
-      : cigar.qty <= 2
-        ? 'text-yellow-300'
-        : 'text-[#d58a24]'
-  }`}
->
-  {cigar.qty === 0
-    ? 'Out'
-    : cigar.qty <= 2
-      ? `Low ×${cigar.qty}`
-      : `×${cigar.qty}`}
-</span>
       </div>
     </div>
   </div>

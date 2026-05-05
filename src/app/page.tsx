@@ -143,8 +143,8 @@ export default function HomePage() {
             </p>
           </aside>
 
-          <section className="w-[66vw] max-w-[930px]">
-            <div className="relative aspect-[4/3] w-full bg-black">
+          <section className="w-[82vw] max-w-[1220px]">
+  <div className="relative aspect-[4/3] w-full bg-black">
               <Image
                 src="/images/main-home-v2.png"
                 alt="My Cigar Cellar main scene"
