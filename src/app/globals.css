@@ -542,3 +542,75 @@ select {
     line-height: 1.45;
   }
 }
+/* Notebook / Smokes iPad readability */
+@media (min-width: 641px) and (max-width: 1400px) {
+  .smokes-ipad-readable {
+    font-size: 20px;
+  }
+
+  .smokes-ipad-readable aside,
+  .smokes-ipad-readable section {
+    border-radius: 28px;
+  }
+
+  .smokes-ipad-readable .text-\[10px\] {
+    font-size: 14px;
+  }
+
+  .smokes-ipad-readable .text-\[11px\],
+  .smokes-ipad-readable .text-\[11\.5px\] {
+    font-size: 15px;
+  }
+
+  .smokes-ipad-readable .text-\[12px\] {
+    font-size: 16px;
+  }
+
+  .smokes-ipad-readable .text-\[13px\] {
+    font-size: 17px;
+  }
+
+  .smokes-ipad-readable .text-\[14px\],
+  .smokes-ipad-readable .text-\[14\.5px\] {
+    font-size: 18px;
+  }
+
+  .smokes-ipad-readable .text-\[15px\] {
+    font-size: 19px;
+  }
+
+  .smokes-ipad-readable .text-\[16px\] {
+    font-size: 21px;
+  }
+
+  .smokes-ipad-readable .text-\[18px\] {
+    font-size: 24px;
+  }
+
+  .smokes-ipad-readable .text-\[19px\] {
+    font-size: 25px;
+  }
+
+  .smokes-ipad-readable .text-\[20px\] {
+    font-size: 27px;
+  }
+
+  .smokes-ipad-readable .text-\[22px\] {
+    font-size: 30px;
+  }
+
+  .smokes-ipad-readable .text-\[24px\] {
+    font-size: 32px;
+  }
+
+  .smokes-ipad-readable input,
+  .smokes-ipad-readable textarea,
+  .smokes-ipad-readable button {
+    min-height: 52px;
+    font-size: 18px;
+  }
+
+  .smokes-ipad-readable textarea {
+    line-height: 1.45;
+  }
+}
