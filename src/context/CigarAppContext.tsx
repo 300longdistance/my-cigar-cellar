@@ -8,6 +8,12 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { onAuthStateChanged, type User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import {
+  saveUserDocument,
+  subscribeToUserCollection,
+} from '@/lib/firestoreSync';
 import type { PairingLog, PairingType } from '@/types/pairing';
 
 export type StoredCigar = {
@@ -101,7 +107,10 @@ function safeParse<T>(value: string | null, fallback: T): T {
 }
 
 export function CigarAppProvider({ children }: { children: ReactNode }) {
-    const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [hasFirestoreSnapshot, setHasFirestoreSnapshot] = useState(false);
+
   const [cigars, setCigars] = useState<StoredCigar[]>([]);
   const [smokeLogs, setSmokeLogs] = useState<SmokeLogEntry[]>([]);
   const [reflections, setReflections] = useState<ReflectionDrafts>({});
@@ -126,7 +135,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
       {}
     );
 
-        const storedWishList = safeParse<WishListItem[]>(
+    const storedWishList = safeParse<WishListItem[]>(
       localStorage.getItem('wishList'),
       defaultWishList
     );
@@ -147,14 +156,14 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     );
 
     setCigars(Array.isArray(storedCigars) ? storedCigars : []);
-    
     setSmokeLogs(Array.isArray(storedSmokeLogs) ? storedSmokeLogs : []);
     setReflections(
       storedReflections && typeof storedReflections === 'object'
         ? storedReflections
         : {}
     );
-        setWishList(
+
+    setWishList(
       Array.isArray(storedWishList) && storedWishList.length > 0
         ? storedWishList
         : defaultWishList
@@ -181,9 +190,43 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
+      setUser(nextUser);
+      setHasFirestoreSnapshot(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubscribe = subscribeToUserCollection<StoredCigar>(
+      'cigars',
+      (items) => {
+        setCigars(items);
+        setHasFirestoreSnapshot(true);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
+
+  useEffect(() => {
     if (!hasLoadedStorage) return;
     localStorage.setItem('cigars', JSON.stringify(cigars));
   }, [cigars, hasLoadedStorage]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (!hasFirestoreSnapshot) return;
+
+    cigars.forEach((cigar) => {
+      saveUserDocument('cigars', String(cigar.id), cigar).catch((error) => {
+        console.error('Failed to save cigar to Firestore:', error);
+      });
+    });
+  }, [cigars, user, hasFirestoreSnapshot]);
 
   useEffect(() => {
     if (!hasLoadedStorage) return;
@@ -195,7 +238,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('smokeReflections', JSON.stringify(reflections));
   }, [reflections, hasLoadedStorage]);
 
-    useEffect(() => {
+  useEffect(() => {
     if (!hasLoadedStorage) return;
     localStorage.setItem('wishList', JSON.stringify(wishList));
   }, [wishList, hasLoadedStorage]);
@@ -220,7 +263,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     }
   }, [quickLogSelection, hasLoadedStorage]);
 
-    const value = useMemo<CigarAppContextValue>(
+  const value = useMemo<CigarAppContextValue>(
     () => ({
       hasLoadedStorage,
       cigars,
