@@ -327,7 +327,7 @@ select {
   }
 }
 /* Humidor iPad readability */
-@media (min-width: 641px) and (max-width: 1180px) {
+@media (min-width: 641px) and (max-width: 1400px) {
   .humidor-ipad-readable {
     font-size: 20px;
   }
@@ -399,7 +399,7 @@ select {
   }
 }
 /* Smoke Log iPad readability */
-@media (min-width: 641px) and (max-width: 1180px) {
+@media (min-width: 641px) and (max-width: 1400px) {
   .smokelog-ipad-readable {
     font-size: 20px;
   }
@@ -471,7 +471,7 @@ select {
   }
 }
 /* Pairings iPad readability */
-@media (min-width: 641px) and (max-width: 1180px) {
+@media (min-width: 641px) and (max-width: 1400px) {
   .pairings-ipad-readable {
     font-size: 20px;
   }
