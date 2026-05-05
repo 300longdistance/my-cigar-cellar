@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -82,7 +83,6 @@ type CigarAppContextValue = {
 };
 
 const fallbackCigars: StoredCigar[] = [];
-
 const defaultWishList: WishListItem[] = [];
 
 const defaultPairingTypes: PairingType[] = [
@@ -109,9 +109,8 @@ function safeParse<T>(value: string | null, fallback: T): T {
 export function CigarAppProvider({ children }: { children: ReactNode }) {
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [hasFirestoreSnapshot, setHasFirestoreSnapshot] = useState(false);
 
-  const [cigars, setCigars] = useState<StoredCigar[]>([]);
+  const [cigars, setCigarsState] = useState<StoredCigar[]>([]);
   const [smokeLogs, setSmokeLogs] = useState<SmokeLogEntry[]>([]);
   const [reflections, setReflections] = useState<ReflectionDrafts>({});
   const [wishList, setWishList] = useState<WishListItem[]>(defaultWishList);
@@ -155,7 +154,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
       null
     );
 
-    setCigars(Array.isArray(storedCigars) ? storedCigars : []);
+    setCigarsState(Array.isArray(storedCigars) ? storedCigars : []);
     setSmokeLogs(Array.isArray(storedSmokeLogs) ? storedSmokeLogs : []);
     setReflections(
       storedReflections && typeof storedReflections === 'object'
@@ -184,6 +183,32 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     setQuickLogSelection(storedQuickLogSelection);
   }
 
+  const setCigars = useCallback<React.Dispatch<React.SetStateAction<StoredCigar[]>>>(
+    (value) => {
+      setCigarsState((current) => {
+        const next = typeof value === 'function' ? value(current) : value;
+
+        localStorage.setItem('cigars', JSON.stringify(next));
+
+        const currentUser = auth.currentUser;
+
+        if (!currentUser) {
+          console.warn('Cigar changed locally, but no Firebase user is logged in.');
+          return next;
+        }
+
+        next.forEach((cigar) => {
+          saveUserDocument('cigars', String(cigar.id), cigar).catch((error) => {
+            console.error('Failed to save cigar to Firestore:', error);
+          });
+        });
+
+        return next;
+      });
+    },
+    []
+  );
+
   useEffect(() => {
     refreshFromStorage();
     setHasLoadedStorage(true);
@@ -192,7 +217,6 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
       setUser(nextUser);
-      setHasFirestoreSnapshot(false);
     });
 
     return () => unsubscribe();
@@ -204,29 +228,13 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     const unsubscribe = subscribeToUserCollection<StoredCigar>(
       'cigars',
       (items) => {
-        setCigars(items);
-        setHasFirestoreSnapshot(true);
+        setCigarsState(items);
+        localStorage.setItem('cigars', JSON.stringify(items));
       }
     );
 
     return () => unsubscribe();
   }, [user]);
-
-  useEffect(() => {
-    if (!hasLoadedStorage) return;
-    localStorage.setItem('cigars', JSON.stringify(cigars));
-  }, [cigars, hasLoadedStorage]);
-
-  useEffect(() => {
-    if (!user) return;
-    if (!hasFirestoreSnapshot) return;
-
-    cigars.forEach((cigar) => {
-      saveUserDocument('cigars', String(cigar.id), cigar).catch((error) => {
-        console.error('Failed to save cigar to Firestore:', error);
-      });
-    });
-  }, [cigars, user, hasFirestoreSnapshot]);
 
   useEffect(() => {
     if (!hasLoadedStorage) return;
@@ -267,23 +275,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     () => ({
       hasLoadedStorage,
       cigars,
-      setCigars: (value) => {
-  setCigars((prev) => {
-    const next =
-      typeof value === 'function' ? value(prev) : value;
-
-    // 🔥 Sync every cigar to Firestore
-    next.forEach((cigar) => {
-      saveUserDocument('cigars', String(cigar.id), cigar).catch(
-        (error) => {
-          console.error('Failed to sync cigar:', error);
-        }
-      );
-    });
-
-    return next;
-  });
-},
+      setCigars,
       smokeLogs,
       setSmokeLogs,
       reflections,
@@ -301,6 +293,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     [
       hasLoadedStorage,
       cigars,
+      setCigars,
       smokeLogs,
       reflections,
       wishList,
