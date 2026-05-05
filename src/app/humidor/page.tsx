@@ -1699,16 +1699,16 @@ function confirmRemoveSelectedCigar() {
                       type="button"
                       onClick={triggerImagePicker}
                       className="flex h-[96px] w-[96px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-white transition hover:brightness-95"
-                      aria-label={selectedCigar.image ? 'Change cigar image' : 'Add cigar image'}
-                      title={selectedCigar.image ? 'Click to change image' : 'Click to add image'}
+                      aria-label={selectedCigar?.image ? 'Change cigar image' : 'Add cigar image'}
+title={selectedCigar?.image ? 'Click to change image' : 'Click to add image'}
                     >
-                      {selectedCigar.image ? (
-                        <img
-                          src={selectedCigar.image}
-                          alt={selectedCigar.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
+                      {selectedCigar?.image ? (
+  <img
+    src={selectedCigar.image}
+    alt={selectedCigar.name}
+    className="h-full w-full object-cover"
+  />
+) : (
                         <div className="flex h-full w-full items-center justify-center px-3 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-[#8a5a20]">
                           Add Image
                         </div>
@@ -1718,9 +1718,23 @@ function confirmRemoveSelectedCigar() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <div className="truncate text-[20px] text-white">
-                            {selectedCigar.name}
-                          </div>
+                          {selectedCigar && (
+  {selectedCigar && (
+  <div className="min-w-0">
+    <div className="truncate text-[20px] text-white">
+      {selectedCigar.name}
+    </div>
+
+    <div className="mt-1 text-[13px] text-white/60">
+      {selectedCigar.brand}
+    </div>
+
+    <div className="mt-1 text-[13px] text-[#d58a24]">
+      in {selectedCigar.humidor}
+    </div>
+  </div>
+)}
+)}
 
                           <div className="mt-1 text-[13px] text-white/60">
                             {selectedCigar.brand}
@@ -2698,67 +2712,54 @@ function confirmRemoveSelectedCigar() {
   </div>
 ) : selectedCigar ? (
   <div className="mx-auto flex w-full max-w-[620px] flex-col gap-3">
-    <div className="rounded-[20px] bg-[#16181c] px-4 py-4">
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={triggerImagePicker}
-          className="flex h-[96px] w-[96px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-white transition hover:brightness-95"
-          aria-label={selectedCigar.image ? 'Change cigar image' : 'Add cigar image'}
-          title={selectedCigar.image ? 'Click to change image' : 'Click to add image'}
-        >
-          {selectedCigar.image ? (
-            <img
-              src={selectedCigar.image}
-              alt={selectedCigar.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center px-3 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-[#8a5a20]">
-              Add Image
-            </div>
-          )}
-        </button>
+                <div className="rounded-[20px] bg-[#16181c] px-4 py-4">
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={triggerNewImagePicker}
+                      className="flex h-[96px] w-[96px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-white transition hover:brightness-95"
+                      aria-label={draftForm.image ? 'Change cigar image' : 'Add cigar image'}
+                      title={draftForm.image ? 'Click to change image' : 'Click to add image'}
+                    >
+                      {draftForm.image ? (
+                        <img
+                          src={draftForm.image}
+                          alt={draftForm.name || 'New cigar'}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center px-3 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-[#8a5a20]">
+                          Add Image
+                        </div>
+                      )}
+                    </button>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="truncate text-[20px] text-white">
-                {selectedCigar.name}
-              </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[20px] text-white">
+                        {draftForm.name.trim() || 'New Cigar'}
+                      </div>
 
-              <div className="mt-1 text-[13px] text-white/60">
-                {selectedCigar.brand}
-              </div>
+                      <div className="mt-1 text-[13px] text-white/60">
+                        {draftForm.brand.trim() || 'Brand'}
+                      </div>
 
-              <div className="mt-1 text-[13px] text-[#d58a24]">
-                in {selectedCigar.humidor}
-              </div>
-            </div>
+                      <div className="mt-1 text-[13px] text-[#d58a24]">
+                        in {draftForm.humidor || selectedHumidor}
+                      </div>
 
-            <button
-              type="button"
-              onClick={() => toggleFavorite(selectedCigar.id)}
-              className="text-[22px] text-white/70 transition hover:text-white"
-              aria-label="Toggle favorite"
-            >
-              {selectedCigar.favorite ? '★' : '☆'}
-            </button>
-          </div>
-
-          <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleSelectedImageChange}
-              className="hidden"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+                      <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
+                        <input
+                          ref={newImageInputRef}
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={handleNewImageChange}
+                          className="hidden"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
     <div className="rounded-[20px] border border-[#3a2a0f] bg-[linear-gradient(180deg,#111214_0%,#0c0c0d_100%)] px-4 py-4 sm:px-5">
                   <div className="mb-4">
