@@ -267,7 +267,23 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     () => ({
       hasLoadedStorage,
       cigars,
-      setCigars,
+      setCigars: (value) => {
+  setCigars((prev) => {
+    const next =
+      typeof value === 'function' ? value(prev) : value;
+
+    // 🔥 Sync every cigar to Firestore
+    next.forEach((cigar) => {
+      saveUserDocument('cigars', String(cigar.id), cigar).catch(
+        (error) => {
+          console.error('Failed to sync cigar:', error);
+        }
+      );
+    });
+
+    return next;
+  });
+},
       smokeLogs,
       setSmokeLogs,
       reflections,
