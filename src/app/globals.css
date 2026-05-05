@@ -326,3 +326,219 @@ select {
     line-height: 1.4;
   }
 }
+/* Humidor iPad readability */
+@media (min-width: 641px) and (max-width: 1180px) {
+  .humidor-ipad-readable {
+    font-size: 20px;
+  }
+
+  .humidor-ipad-readable aside,
+  .humidor-ipad-readable section {
+    border-radius: 28px;
+  }
+
+  .humidor-ipad-readable .text-\[10px\] {
+    font-size: 14px;
+  }
+
+  .humidor-ipad-readable .text-\[11px\],
+  .humidor-ipad-readable .text-\[11\.5px\] {
+    font-size: 15px;
+  }
+
+  .humidor-ipad-readable .text-\[12px\] {
+    font-size: 16px;
+  }
+
+  .humidor-ipad-readable .text-\[13px\] {
+    font-size: 17px;
+  }
+
+  .humidor-ipad-readable .text-\[14px\],
+  .humidor-ipad-readable .text-\[14\.5px\] {
+    font-size: 18px;
+  }
+
+  .humidor-ipad-readable .text-\[15px\] {
+    font-size: 19px;
+  }
+
+  .humidor-ipad-readable .text-\[16px\] {
+    font-size: 21px;
+  }
+
+  .humidor-ipad-readable .text-\[18px\] {
+    font-size: 24px;
+  }
+
+  .humidor-ipad-readable .text-\[19px\] {
+    font-size: 25px;
+  }
+
+  .humidor-ipad-readable .text-\[20px\] {
+    font-size: 27px;
+  }
+
+  .humidor-ipad-readable .text-\[22px\] {
+    font-size: 30px;
+  }
+
+  .humidor-ipad-readable .text-\[24px\] {
+    font-size: 32px;
+  }
+
+  .humidor-ipad-readable input,
+  .humidor-ipad-readable textarea,
+  .humidor-ipad-readable button {
+    min-height: 52px;
+    font-size: 18px;
+  }
+
+  .humidor-ipad-readable textarea {
+    line-height: 1.45;
+  }
+}
+/* Smoke Log iPad readability */
+@media (min-width: 641px) and (max-width: 1180px) {
+  .smokelog-ipad-readable {
+    font-size: 20px;
+  }
+
+  .smokelog-ipad-readable aside,
+  .smokelog-ipad-readable section {
+    border-radius: 28px;
+  }
+
+  .smokelog-ipad-readable .text-\[10px\] {
+    font-size: 14px;
+  }
+
+  .smokelog-ipad-readable .text-\[11px\],
+  .smokelog-ipad-readable .text-\[11\.5px\] {
+    font-size: 15px;
+  }
+
+  .smokelog-ipad-readable .text-\[12px\] {
+    font-size: 16px;
+  }
+
+  .smokelog-ipad-readable .text-\[13px\] {
+    font-size: 17px;
+  }
+
+  .smokelog-ipad-readable .text-\[14px\],
+  .smokelog-ipad-readable .text-\[14\.5px\] {
+    font-size: 18px;
+  }
+
+  .smokelog-ipad-readable .text-\[15px\] {
+    font-size: 19px;
+  }
+
+  .smokelog-ipad-readable .text-\[16px\] {
+    font-size: 21px;
+  }
+
+  .smokelog-ipad-readable .text-\[18px\] {
+    font-size: 24px;
+  }
+
+  .smokelog-ipad-readable .text-\[19px\] {
+    font-size: 25px;
+  }
+
+  .smokelog-ipad-readable .text-\[20px\] {
+    font-size: 27px;
+  }
+
+  .smokelog-ipad-readable .text-\[22px\] {
+    font-size: 30px;
+  }
+
+  .smokelog-ipad-readable .text-\[24px\] {
+    font-size: 32px;
+  }
+
+  .smokelog-ipad-readable input,
+  .smokelog-ipad-readable textarea,
+  .smokelog-ipad-readable button {
+    min-height: 52px;
+    font-size: 18px;
+  }
+
+  .smokelog-ipad-readable textarea {
+    line-height: 1.45;
+  }
+}
+/* Pairings iPad readability */
+@media (min-width: 641px) and (max-width: 1180px) {
+  .pairings-ipad-readable {
+    font-size: 20px;
+  }
+
+  .pairings-ipad-readable aside,
+  .pairings-ipad-readable section {
+    border-radius: 28px;
+  }
+
+  .pairings-ipad-readable .text-\[10px\] {
+    font-size: 14px;
+  }
+
+  .pairings-ipad-readable .text-\[11px\],
+  .pairings-ipad-readable .text-\[11\.5px\] {
+    font-size: 15px;
+  }
+
+  .pairings-ipad-readable .text-\[12px\] {
+    font-size: 16px;
+  }
+
+  .pairings-ipad-readable .text-\[13px\] {
+    font-size: 17px;
+  }
+
+  .pairings-ipad-readable .text-\[14px\],
+  .pairings-ipad-readable .text-\[14\.5px\] {
+    font-size: 18px;
+  }
+
+  .pairings-ipad-readable .text-\[15px\] {
+    font-size: 19px;
+  }
+
+  .pairings-ipad-readable .text-\[16px\] {
+    font-size: 21px;
+  }
+
+  .pairings-ipad-readable .text-\[18px\] {
+    font-size: 24px;
+  }
+
+  .pairings-ipad-readable .text-\[19px\] {
+    font-size: 25px;
+  }
+
+  .pairings-ipad-readable .text-\[20px\] {
+    font-size: 27px;
+  }
+
+  .pairings-ipad-readable .text-\[22px\] {
+    font-size: 30px;
+  }
+
+  .pairings-ipad-readable .text-\[24px\] {
+    font-size: 32px;
+  }
+
+  .pairings-ipad-readable input,
+  .pairings-ipad-readable textarea,
+  .pairings-ipad-readable button {
+    min-height: 52px;
+    font-size: 18px;
+  }
+
+  .pairings-ipad-readable textarea {
+    line-height: 1.45;
+  }
+}
