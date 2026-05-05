@@ -9,7 +9,10 @@ import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCjB8vcgP6T7i4rNkvkNUNoTHkgG5QRgU4",
-  authDomain: "my-cigar-cellar.firebaseapp.com",
+  authDomain:
+    typeof window !== 'undefined' && window.location.hostname === 'localhost'
+      ? "my-cigar-cellar.firebaseapp.com"
+      : "my-cigar-cellar.vercel.app",
   projectId: "my-cigar-cellar",
   storageBucket: "my-cigar-cellar.firebasestorage.app",
   messagingSenderId: "1035238542027",
@@ -25,6 +28,7 @@ setPersistence(auth, browserLocalPersistence).catch((error) => {
 });
 
 export const provider = new GoogleAuthProvider();
+
 provider.setCustomParameters({
   prompt: 'select_account',
 });
