@@ -313,9 +313,9 @@ setCigars(nextCigars);
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto w-full max-w-[1380px] px-2.5 py-2.5 sm:px-3 sm:py-3 lg:px-4 lg:py-4">
-        <div className="grid min-h-[calc(100vh-20px)] grid-cols-1 gap-2.5 sm:grid-cols-[290px_minmax(0,1fr)] sm:gap-3 md:grid-cols-[320px_minmax(0,1fr)] lg:grid-cols-[340px_minmax(0,1fr)]">
+    <main className="smokes-phone-readable min-h-screen overflow-x-hidden bg-black text-white">
+      <div className="mx-auto w-full max-w-[1380px] px-1.5 py-1.5 sm:px-3 sm:py-3 lg:px-4 lg:py-4">
+        <div className="grid min-h-[calc(100vh-12px)] grid-cols-1 gap-2 sm:grid-cols-[290px_minmax(0,1fr)] sm:gap-3 md:grid-cols-[320px_minmax(0,1fr)] lg:grid-cols-[340px_minmax(0,1fr)]">
           <aside className="rounded-[24px] bg-[#050505] px-3 py-3 sm:px-4 sm:py-4">
             <div className="mb-3 flex items-center justify-between">
               <Link

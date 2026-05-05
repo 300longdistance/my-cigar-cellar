@@ -140,9 +140,6 @@ const sizeOptions = [
   'Figurado',
 ];
 
-const FREE_HUMIDOR_LIMIT = 2;
-const FREE_TOTAL_CIGAR_LIMIT = 50;
-
 export default function HumidorPage() {
   const [humidors, setHumidors] = useState<string[]>(defaultHumidors);
 const { cigars, setCigars } = useCigarApp();
@@ -182,8 +179,6 @@ const [editSizeActiveIndex, setEditSizeActiveIndex] = useState(0);
 const [editOriginActiveIndex, setEditOriginActiveIndex] = useState(0);
 
 const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
-
-const [limitMessage, setLimitMessage] = useState('');
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isManageHumidorsOpen, setIsManageHumidorsOpen] = useState(false);
@@ -796,14 +791,6 @@ useEffect(() => {
   }
 
   function startCreatingNewCigar() {
-  if (totalCigarsOnHand + Math.max(1, draftForm.qty || 1) > FREE_TOTAL_CIGAR_LIMIT) {
-  setLimitMessage(
-    `Free version supports up to ${FREE_TOTAL_CIGAR_LIMIT} total cigars on hand. Lower the quantity, remove cigars, or upgrade to Pro when available.`
-  );
-  return;
-}
-
-  setLimitMessage('');
   setIsCreatingNew(true);
   setSelectedId(null);
   setDraftForm(emptyForm(selectedHumidor));
@@ -842,23 +829,7 @@ useEffect(() => {
   if (!trimmedName) return;
   if (!nextHumidor) return;
 
-  if (totalCigarsOnHand >= FREE_TOTAL_CIGAR_LIMIT) {
-  setLimitMessage(
-    `Free version supports up to ${FREE_TOTAL_CIGAR_LIMIT} total cigars on hand. Remove cigars or upgrade to Pro when available.`
-  );
-  return;
-}
-
-  const isNewHumidor = !humidors.includes(nextHumidor);
-
-  if (isNewHumidor && humidors.length >= FREE_HUMIDOR_LIMIT) {
-    setLimitMessage(
-      `Free version supports up to ${FREE_HUMIDOR_LIMIT} humidors. Use an existing humidor or upgrade to Pro when available.`
-    );
-    return;
-  }
-
-  setLimitMessage('');
+    const isNewHumidor = !humidors.includes(nextHumidor);
 
   if (isNewHumidor) {
     setHumidors((current) => [...current, nextHumidor]);
@@ -1060,15 +1031,6 @@ function confirmRemoveSelectedCigar() {
   if (humidors.some((humidor) => humidor.toLowerCase() === trimmed.toLowerCase())) {
     return;
   }
-
-  if (humidors.length >= FREE_HUMIDOR_LIMIT) {
-    setLimitMessage(
-      `Free version supports up to ${FREE_HUMIDOR_LIMIT} humidors. Delete a humidor or upgrade to Pro when available.`
-    );
-    return;
-  }
-
-  setLimitMessage('');
 
   const nextHumidors = [...humidors, trimmed];
   setHumidors(nextHumidors);
@@ -1497,46 +1459,6 @@ function confirmRemoveSelectedCigar() {
     })}
   </div>
 )}
-<div className="mt-3 rounded-[14px] border border-[#3a2a0f] bg-[linear-gradient(135deg,#101114_0%,#15171c_100%)] px-3 py-2.5">
-  <div className="flex items-center justify-between gap-3 text-[11px] text-white/55">
-    <span>Free Plan</span>
-    <span>{totalCigarsOnHand}/{FREE_TOTAL_CIGAR_LIMIT} cigars</span>
-    <div className="mt-2 text-[10px] text-[#c8882d]/80 tracking-wide">
-  Upgrade to Pro for unlimited cigars & humidors
-</div>
-  </div>
-
-  <div className="mt-1 flex items-center justify-between gap-3 text-[11px] text-white/55">
-    <span>Humidors</span>
-    <span>{humidors.length}/{FREE_HUMIDOR_LIMIT}</span>
-  </div>
-</div>
-
-{limitMessage && (
-  <div className="mt-4 rounded-[16px] border border-[#c8882d]/40 bg-[linear-gradient(135deg,#1a120b_0%,#22170d_100%)] px-4 py-3 shadow-[0_0_0_1px_rgba(200,136,45,0.15),0_8px_20px_rgba(0,0,0,0.4)]">
-
-    <div className="flex items-start justify-between gap-4">
-      
-      <div className="flex-1">
-        <div className="text-[12px] font-semibold tracking-wide text-[#f0b36a]">
-          Free Plan Limit Reached
-        </div>
-
-        <div className="mt-1 text-[12px] leading-relaxed text-white/70">
-          {limitMessage}
-        </div>
-      </div>
-
-      <button
-        onClick={() => alert('Pro upgrade coming soon')}
-        className="shrink-0 rounded-[10px] border border-[#c8882d]/50 bg-[linear-gradient(135deg,#c8882d_0%,#e0a94b_100%)] px-3 py-1.5 text-[11px] font-semibold text-black transition hover:brightness-110 active:scale-[0.98]"
-      >
-        Upgrade to Pro
-      </button>
-
-    </div>
-  </div>
-)}
 
               <div className="mt-5 border-t border-[#5a3410]/70 pt-3">
                 <div className="text-[10px] uppercase tracking-[0.14em] text-[#c8821f]">
@@ -1770,55 +1692,70 @@ function confirmRemoveSelectedCigar() {
             </div>
 
             {isCreatingNew ? (
-  <div className="mx-auto flex w-full max-w-[620px] flex-col gap-3">
-    <div className="rounded-[20px] bg-[#16181c] px-4 py-4">
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={triggerNewImagePicker}
-          className="flex h-[96px] w-[96px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-white transition hover:brightness-95"
-          aria-label={draftForm.image ? 'Change cigar image' : 'Add cigar image'}
-          title={draftForm.image ? 'Click to change image' : 'Click to add image'}
-        >
-          {draftForm.image ? (
-            <img
-              src={draftForm.image}
-              alt={draftForm.name || 'New cigar'}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center px-3 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-[#8a5a20]">
-              Add Image
-            </div>
-          )}
-        </button>
+                <div className="mx-auto flex w-full max-w-[620px] flex-col gap-3">
+                <div className="rounded-[20px] bg-[#16181c] px-4 py-4">
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={triggerImagePicker}
+                      className="flex h-[96px] w-[96px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-white transition hover:brightness-95"
+                      aria-label={selectedCigar.image ? 'Change cigar image' : 'Add cigar image'}
+                      title={selectedCigar.image ? 'Click to change image' : 'Click to add image'}
+                    >
+                      {selectedCigar.image ? (
+                        <img
+                          src={selectedCigar.image}
+                          alt={selectedCigar.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center px-3 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-[#8a5a20]">
+                          Add Image
+                        </div>
+                      )}
+                    </button>
 
-        <div className="min-w-0 flex-1">
-          <div className="text-[20px] text-white">
-            {draftForm.name.trim() || 'New Cigar'}
-          </div>
-          <div className="mt-1 text-[13px] text-white/60">
-            {draftForm.brand.trim() || 'Brand'}
-          </div>
-          <div className="mt-1 text-[13px] text-[#d58a24]">
-            in {draftForm.humidor || selectedHumidor}
-          </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="truncate text-[20px] text-white">
+                            {selectedCigar.name}
+                          </div>
 
-          <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
-            <input
-              ref={newImageInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleNewImageChange}
-              className="hidden"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+                          <div className="mt-1 text-[13px] text-white/60">
+                            {selectedCigar.brand}
+                          </div>
 
-    <div className="rounded-[20px] border border-[#3a2a0f] bg-[linear-gradient(180deg,#111214_0%,#0c0c0d_100%)] px-4 py-3.5 sm:px-5">
+                          <div className="mt-1 text-[13px] text-[#d58a24]">
+                            in {selectedCigar.humidor}
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleFavorite(selectedCigar.id)}
+                          className="text-[22px] text-white/70 transition hover:text-white"
+                          aria-label="Toggle favorite"
+                        >
+                          {selectedCigar.favorite ? '★' : '☆'}
+                        </button>
+                      </div>
+
+                      <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
+                        <input
+                          ref={imageInputRef}
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          onChange={handleSelectedImageChange}
+                          className="hidden"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[20px] border border-[#3a2a0f] bg-[linear-gradient(180deg,#111214_0%,#0c0c0d_100%)] px-4 py-4 sm:px-5">
   <div className="mb-3">
     <div className="text-[10px] uppercase tracking-[0.14em] text-[#c8821f]">
       New Cigar
@@ -2760,68 +2697,70 @@ function confirmRemoveSelectedCigar() {
 </div>
   </div>
 ) : selectedCigar ? (
-              <div className="mx-auto flex w-full max-w-[620px] flex-col gap-3">
-                <div className="rounded-[20px] bg-[#16181c] px-4 py-4">
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={triggerImagePicker}
-                      className="flex h-[96px] w-[96px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-white transition hover:brightness-95"
-                      aria-label={selectedCigar.image ? 'Change cigar image' : 'Add cigar image'}
-                      title={selectedCigar.image ? 'Click to change image' : 'Click to add image'}
-                    >
-                      {selectedCigar.image ? (
-                        <img
-                          src={selectedCigar.image}
-                          alt={selectedCigar.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center px-3 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-[#8a5a20]">
-                          Add Image
-                        </div>
-                      )}
-                    </button>
+  <div className="mx-auto flex w-full max-w-[620px] flex-col gap-3">
+    <div className="rounded-[20px] bg-[#16181c] px-4 py-4">
+      <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={triggerImagePicker}
+          className="flex h-[96px] w-[96px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-white transition hover:brightness-95"
+          aria-label={selectedCigar.image ? 'Change cigar image' : 'Add cigar image'}
+          title={selectedCigar.image ? 'Click to change image' : 'Click to add image'}
+        >
+          {selectedCigar.image ? (
+            <img
+              src={selectedCigar.image}
+              alt={selectedCigar.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center px-3 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-[#8a5a20]">
+              Add Image
+            </div>
+          )}
+        </button>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="truncate text-[20px] text-white">
-                            {selectedCigar.name}
-                          </div>
-                          <div className="mt-1 text-[13px] text-white/60">
-                            {selectedCigar.brand}
-                          </div>
-                          <div className="mt-1 text-[13px] text-[#d58a24]">
-                            in {selectedCigar.humidor}
-                          </div>
-                        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="truncate text-[20px] text-white">
+                {selectedCigar.name}
+              </div>
 
-                        <button
-                          type="button"
-                          onClick={() => toggleFavorite(selectedCigar.id)}
-                          className="text-[22px] text-white/70 transition hover:text-white"
-                          aria-label="Toggle favorite"
-                        >
-                          {selectedCigar.favorite ? '★' : '☆'}
-                        </button>
-                      </div>
+              <div className="mt-1 text-[13px] text-white/60">
+                {selectedCigar.brand}
+              </div>
 
-                      <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
-                        <input
-                          ref={imageInputRef}
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          onChange={handleSelectedImageChange}
-                          className="hidden"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="mt-1 text-[13px] text-[#d58a24]">
+                in {selectedCigar.humidor}
+              </div>
+            </div>
 
-                <div className="rounded-[20px] border border-[#3a2a0f] bg-[linear-gradient(180deg,#111214_0%,#0c0c0d_100%)] px-4 py-4 sm:px-5">
+            <button
+              type="button"
+              onClick={() => toggleFavorite(selectedCigar.id)}
+              className="text-[22px] text-white/70 transition hover:text-white"
+              aria-label="Toggle favorite"
+            >
+              {selectedCigar.favorite ? '★' : '☆'}
+            </button>
+          </div>
+
+          <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleSelectedImageChange}
+              className="hidden"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div className="rounded-[20px] border border-[#3a2a0f] bg-[linear-gradient(180deg,#111214_0%,#0c0c0d_100%)] px-4 py-4 sm:px-5">
                   <div className="mb-4">
                     <div className="text-[10px] uppercase tracking-[0.14em] text-[#c8821f]">
                       Cigar Record
@@ -3682,16 +3621,7 @@ function confirmRemoveSelectedCigar() {
 
                     <button
   type="button"
-  onClick={() => {
-    if (totalCigarsOnHand >= FREE_TOTAL_CIGAR_LIMIT) {
-      setLimitMessage(
-        `Free version supports up to ${FREE_TOTAL_CIGAR_LIMIT} total cigars on hand. Remove cigars or upgrade to Pro when available.`
-      );
-      return;
-    }
-
-    updateQty(selectedCigar.id, 1);
-  }}
+  onClick={() => updateQty(selectedCigar.id, 1)}
   className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[#c8882d] text-[18px] text-white transition hover:brightness-110"
   aria-label="Increase quantity"
 >

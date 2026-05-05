@@ -62,69 +62,267 @@ select {
     font-size: 17px;
   }
 }
-/* Humidor phone readability only */
+/* Humidor phone readability (larger) */
 @media (max-width: 640px) {
   .humidor-phone-readable {
-    font-size: 18px;
+    font-size: 19px;
   }
 
   .humidor-phone-readable aside,
   .humidor-phone-readable section {
     border-radius: 18px;
-    padding-left: 0.7rem;
-    padding-right: 0.7rem;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
   }
 
   .humidor-phone-readable .text-\[10px\] {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .humidor-phone-readable .text-\[11px\],
   .humidor-phone-readable .text-\[11\.5px\] {
-    font-size: 13px;
-  }
-
-  .humidor-phone-readable .text-\[12px\] {
     font-size: 14px;
   }
 
-  .humidor-phone-readable .text-\[13px\] {
+  .humidor-phone-readable .text-\[12px\] {
     font-size: 15px;
+  }
+
+  .humidor-phone-readable .text-\[13px\] {
+    font-size: 16px;
   }
 
   .humidor-phone-readable .text-\[14px\],
   .humidor-phone-readable .text-\[14\.5px\] {
-    font-size: 16px;
-  }
-
-  .humidor-phone-readable .text-\[15px\] {
     font-size: 17px;
   }
 
-  .humidor-phone-readable .text-\[16px\] {
+  .humidor-phone-readable .text-\[15px\] {
     font-size: 18px;
   }
 
-  .humidor-phone-readable .text-\[18px\] {
-    font-size: 21px;
+  .humidor-phone-readable .text-\[16px\] {
+    font-size: 19px;
   }
 
-  .humidor-phone-readable .text-\[20px\] {
+  .humidor-phone-readable .text-\[18px\] {
     font-size: 23px;
   }
 
+  .humidor-phone-readable .text-\[20px\] {
+    font-size: 26px;
+  }
+
   .humidor-phone-readable .text-\[22px\] {
-    font-size: 25px;
+    font-size: 28px;
   }
 
   .humidor-phone-readable input,
   .humidor-phone-readable textarea,
   .humidor-phone-readable button {
-    min-height: 44px;
+    min-height: 48px;
+    font-size: 16px;
   }
 
-  .humidor-phone-readable input,
   .humidor-phone-readable textarea {
-    line-height: 1.35;
+    line-height: 1.4;
+  }
+}
+/* Smoke Log phone readability */
+@media (max-width: 640px) {
+  .smokelog-phone-readable {
+    font-size: 19px;
+  }
+
+  .smokelog-phone-readable aside,
+  .smokelog-phone-readable section {
+    border-radius: 18px;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+
+  .smokelog-phone-readable .text-\[10px\] {
+    font-size: 13px;
+  }
+
+  .smokelog-phone-readable .text-\[11px\],
+  .smokelog-phone-readable .text-\[11\.5px\] {
+    font-size: 14px;
+  }
+
+  .smokelog-phone-readable .text-\[12px\] {
+    font-size: 15px;
+  }
+
+  .smokelog-phone-readable .text-\[13px\] {
+    font-size: 16px;
+  }
+
+  .smokelog-phone-readable .text-\[14px\],
+  .smokelog-phone-readable .text-\[14\.5px\] {
+    font-size: 17px;
+  }
+
+  .smokelog-phone-readable .text-\[15px\] {
+    font-size: 18px;
+  }
+
+  .smokelog-phone-readable .text-\[16px\] {
+    font-size: 20px;
+  }
+
+  .smokelog-phone-readable .text-\[18px\] {
+    font-size: 23px;
+  }
+
+  .smokelog-phone-readable .text-\[20px\] {
+    font-size: 26px;
+  }
+
+  .smokelog-phone-readable .text-\[22px\] {
+    font-size: 28px;
+  }
+
+  .smokelog-phone-readable input,
+  .smokelog-phone-readable textarea,
+  .smokelog-phone-readable button {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .smokelog-phone-readable textarea {
+    line-height: 1.4;
+  }
+}
+/* Notebook / Smokes phone readability */
+@media (max-width: 640px) {
+  .smokes-phone-readable {
+    font-size: 19px;
+  }
+
+  .smokes-phone-readable aside,
+  .smokes-phone-readable section {
+    border-radius: 18px;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+
+  .smokes-phone-readable .text-\[10px\] {
+    font-size: 13px;
+  }
+
+  .smokes-phone-readable .text-\[11px\],
+  .smokes-phone-readable .text-\[11\.5px\] {
+    font-size: 14px;
+  }
+
+  .smokes-phone-readable .text-\[12px\] {
+    font-size: 15px;
+  }
+
+  .smokes-phone-readable .text-\[13px\] {
+    font-size: 16px;
+  }
+
+  .smokes-phone-readable .text-\[14px\],
+  .smokes-phone-readable .text-\[14\.5px\] {
+    font-size: 17px;
+  }
+
+  .smokes-phone-readable .text-\[15px\] {
+    font-size: 18px;
+  }
+
+  .smokes-phone-readable .text-\[16px\] {
+    font-size: 20px;
+  }
+
+  .smokes-phone-readable .text-\[18px\] {
+    font-size: 23px;
+  }
+
+  .smokes-phone-readable .text-\[20px\] {
+    font-size: 26px;
+  }
+
+  .smokes-phone-readable .text-\[22px\] {
+    font-size: 28px;
+  }
+
+  .smokes-phone-readable input,
+  .smokes-phone-readable textarea,
+  .smokes-phone-readable button {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .smokes-phone-readable textarea {
+    line-height: 1.4;
+  }
+}
+/* Pairings phone readability */
+@media (max-width: 640px) {
+  .pairings-phone-readable {
+    font-size: 19px;
+  }
+
+  .pairings-phone-readable aside,
+  .pairings-phone-readable section {
+    border-radius: 18px;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+
+  .pairings-phone-readable .text-\[10px\] {
+    font-size: 13px;
+  }
+
+  .pairings-phone-readable .text-\[11px\],
+  .pairings-phone-readable .text-\[11\.5px\] {
+    font-size: 14px;
+  }
+
+  .pairings-phone-readable .text-\[12px\] {
+    font-size: 15px;
+  }
+
+  .pairings-phone-readable .text-\[13px\] {
+    font-size: 16px;
+  }
+
+  .pairings-phone-readable .text-\[14px\],
+  .pairings-phone-readable .text-\[14\.5px\] {
+    font-size: 17px;
+  }
+
+  .pairings-phone-readable .text-\[15px\] {
+    font-size: 18px;
+  }
+
+  .pairings-phone-readable .text-\[16px\] {
+    font-size: 20px;
+  }
+
+  .pairings-phone-readable .text-\[18px\] {
+    font-size: 23px;
+  }
+
+  .pairings-phone-readable .text-\[20px\] {
+    font-size: 26px;
+  }
+
+  .pairings-phone-readable .text-\[22px\] {
+    font-size: 28px;
+  }
+
+  .pairings-phone-readable input,
+  .pairings-phone-readable textarea,
+  .pairings-phone-readable button {
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  .pairings-phone-readable textarea {
+    line-height: 1.4;
   }
 }

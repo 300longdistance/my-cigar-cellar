@@ -464,9 +464,9 @@ export default function PairingsPage() {
     derivedPairingNames.length > 0 && derivedCigarNames.length > 0;
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto w-full max-w-[920px] px-3 py-3 sm:px-4 sm:py-4">
-        <div className="rounded-[28px] bg-[#050505] px-4 py-4 sm:px-5 sm:py-5">
+  <main className="pairings-phone-readable min-h-screen overflow-x-hidden bg-black text-white">
+    <div className="mx-auto w-full max-w-[1380px] px-1.5 py-1.5 sm:px-3 sm:py-3 lg:px-4 lg:py-4">
+      <div className="grid min-h-[calc(100vh-12px)] grid-cols-1 gap-2 sm:grid-cols-[290px_minmax(0,1fr)] sm:gap-3 md:grid-cols-[320px_minmax(0,1fr)] lg:grid-cols-[340px_minmax(0,1fr)]">
           <div className="mb-5 flex items-center justify-between">
             <Link
               href="/"
