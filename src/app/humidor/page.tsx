@@ -141,9 +141,8 @@ const sizeOptions = [
 ];
 
 export default function HumidorPage() {
-  const [humidors, setHumidors] = useState<string[]>(defaultHumidors);
-const { cigars, setCigars } = useCigarApp();
-const [selectedHumidor, setSelectedHumidor] = useState<string>(defaultHumidors[0] ?? '');
+  const { humidors, setHumidors, cigars, setCigars } = useCigarApp();
+const [selectedHumidor, setSelectedHumidor] = useState<string>('');
 const [selectedId, setSelectedId] = useState<number | null>(defaultCigars[0]?.id ?? null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
 const [isHumidorDropdownOpen, setIsHumidorDropdownOpen] = useState(false);
@@ -239,54 +238,11 @@ const editCigarOriginRef = useRef<HTMLInputElement | null>(null);
   }
 
   useEffect(() => {
-    const savedHumidors = localStorage.getItem('humidors');
-    const savedCigars = localStorage.getItem('cigars');
-
-    let nextHumidors = defaultHumidors;
-    let nextCigars = defaultCigars;
-
-    if (savedHumidors) {
-      try {
-        const parsed = JSON.parse(savedHumidors) as string[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          nextHumidors = parsed;
-        }
-      } catch (error) {
-        console.error('Failed to load humidors from localStorage:', error);
-      }
-    }
-
-    if (savedCigars) {
-      try {
-        const parsed = JSON.parse(savedCigars) as Cigar[];
-        if (Array.isArray(parsed)) {
-          nextCigars = parsed;
-        }
-      } catch (error) {
-        console.error('Failed to load cigars from localStorage:', error);
-      }
-    }
-
     loadSmokeLogsFromStorage();
-
-    setHumidors(nextHumidors);
-    setCigars(nextCigars);
-    setSelectedHumidor(nextHumidors[0] ?? defaultHumidors[0]);
-    setDraftForm(emptyForm(nextHumidors[0] ?? defaultHumidors[0]));
     setHasLoadedStorage(true);
   }, []);
 
-  useEffect(() => {
-    if (!hasLoadedStorage) return;
-    localStorage.setItem('humidors', JSON.stringify(humidors));
-  }, [humidors, hasLoadedStorage]);
-
-  useEffect(() => {
-    if (!hasLoadedStorage) return;
-    localStorage.setItem('cigars', JSON.stringify(cigars));
-  }, [cigars, hasLoadedStorage]);
-
-  useEffect(() => {
+     useEffect(() => {
     if (!hasLoadedStorage) return;
     localStorage.setItem('smokeLogs', JSON.stringify(smokeLogs));
   }, [smokeLogs, hasLoadedStorage]);
@@ -640,10 +596,15 @@ useEffect(() => {
 }, [isEditOriginDropdownOpen, filteredEditOriginOptions]);
 
   useEffect(() => {
-    if (humidors.length === 0) return;
+    if (humidors.length === 0) {
+      setSelectedHumidor('');
+      setDraftForm(emptyForm(''));
+      return;
+    }
 
-    if (!humidors.includes(selectedHumidor)) {
+    if (!selectedHumidor || !humidors.includes(selectedHumidor)) {
       setSelectedHumidor(humidors[0]);
+      setDraftForm(emptyForm(humidors[0]));
     }
   }, [humidors, selectedHumidor]);
 
