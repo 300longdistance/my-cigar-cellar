@@ -1,55 +1,57 @@
 'use client';
 
-import { auth, provider } from '@/lib/firebase';
-import {
-  signInWithPopup,
-  signInWithRedirect,
-  signOut,
-  onAuthStateChanged,
-  getRedirectResult,
-  User,
-} from 'firebase/auth';
+import { supabase } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
 
-function shouldUseRedirect() {
-  if (typeof window === 'undefined') return false;
-
-  const userAgent = window.navigator.userAgent.toLowerCase();
-  const isAppleMobile =
-    /iphone|ipad|ipod/.test(userAgent) ||
-    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-  return isAppleMobile;
-}
-
 export default function AuthButton() {
-  const [user, setUser] = useState<User | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    getRedirectResult(auth).catch((error) => {
-      console.error('Google redirect login failed:', error);
-    });
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    const unsubscribe = onAuthStateChanged(auth, setUser);
-    return () => unsubscribe();
-  }, []);
-
-  const handleLogin = async () => {
-    if (shouldUseRedirect()) {
-      await signInWithRedirect(auth, provider);
-      return;
+      setUserEmail(user?.email ?? null);
     }
 
-    await signInWithPopup(auth, provider);
-  };
+    loadUser();
 
-  const handleLogout = async () => {
-    await signOut(auth);
-  };
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user?.email ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  async function handleLogin() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+
+    if (error) {
+      console.error('Supabase Google login failed:', error);
+    }
+  }
+
+  async function handleLogout() {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error('Supabase logout failed:', error);
+    }
+  }
 
   return (
     <div className="fixed right-4 top-4 z-50">
-      {user ? (
+      {userEmail ? (
         <button
           type="button"
           onClick={handleLogout}

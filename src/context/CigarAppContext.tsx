@@ -8,12 +8,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { onAuthStateChanged, type User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import {
-  saveUserAppData,
-  subscribeToUserAppData,
-} from '@/lib/firestoreSync';
+import type { User } from '@supabase/supabase-js';
+import { getUserAppData, saveUserAppData } from '@/lib/supabaseAppData';
+import { supabase } from '@/lib/supabase/client';
 import type { PairingLog, PairingType } from '@/types/pairing';
 
 export type StoredCigar = {
@@ -181,38 +178,55 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     applyAppData(buildAppDataFromLocalStorage());
   }
 
-  useEffect(() => {
-    refreshFromStorage();
-    setHasLoadedStorage(true);
-  }, []);
+  async function loadSupabaseUserAndData() {
+    const {
+      data: { user: nextUser },
+    } = await supabase.auth.getUser();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (nextUser) => {
-      setUser(nextUser);
-    });
+    setUser(nextUser);
 
-    return () => unsubscribe();
-  }, []);
+    if (!nextUser) {
+      setHasLoadedStorage(true);
+      return;
+    }
 
-  useEffect(() => {
-    if (!user) return;
+    try {
+      const cloudData = await getUserAppData<AppData>();
 
-    const unsubscribe = subscribeToUserAppData<AppData>((cloudData) => {
       if (!cloudData) {
         const localData = buildAppDataFromLocalStorage();
-
-        saveUserAppData(localData).catch((error) => {
-          console.error('Failed to create initial Firestore app data:', error);
-        });
-
+        await saveUserAppData(localData);
+        applyAppData(localData);
+        setHasLoadedStorage(true);
         return;
       }
 
       applyAppData(cloudData);
+    } catch (error) {
+      console.error('Failed to load Supabase app data:', error);
+    }
+
+    setHasLoadedStorage(true);
+  }
+
+  useEffect(() => {
+    refreshFromStorage();
+    loadSupabaseUserAndData();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        loadSupabaseUserAndData();
+      }
     });
 
-    return () => unsubscribe();
-  }, [user]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     if (!hasLoadedStorage) return;
@@ -246,7 +260,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     };
 
     saveUserAppData(appData).catch((error) => {
-      console.error('Failed to save Firestore app data:', error);
+      console.error('Failed to save Supabase app data:', error);
     });
   }, [
     hasLoadedStorage,

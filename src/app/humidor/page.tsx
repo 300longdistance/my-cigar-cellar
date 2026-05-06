@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useCigarApp } from '@/context/CigarAppContext';
+import { saveUserAppData } from '@/lib/supabaseAppData';
 
 type Cigar = {
   id: number;
@@ -782,7 +783,7 @@ useEffect(() => {
     }
   }
 
-  function saveNewCigar() {
+  async function saveNewCigar() {
   const trimmedName = draftForm.name.trim();
   const trimmedBrand = draftForm.brand.trim();
   const nextHumidor = draftForm.humidor.trim();
@@ -790,11 +791,11 @@ useEffect(() => {
   if (!trimmedName) return;
   if (!nextHumidor) return;
 
-    const isNewHumidor = !humidors.includes(nextHumidor);
+  const isNewHumidor = !humidors.includes(nextHumidor);
 
-  if (isNewHumidor) {
-    setHumidors((current) => [...current, nextHumidor]);
-  }
+  const nextHumidors = isNewHumidor
+    ? [...humidors, nextHumidor]
+    : humidors;
 
   const newCigar = {
     id: Date.now(),
@@ -811,28 +812,40 @@ useEffect(() => {
     image: draftForm.image,
   };
 
-  setCigars((current) => [newCigar, ...current]);
-  setSelectedHumidor(nextHumidor);
-  setSelectedId(newCigar.id);
-  setIsCreatingNew(true);
-  setSearchTerm('');
+  const nextCigars = [newCigar, ...cigars];
 
-  setDraftForm({
-    name: '',
-    brand: trimmedBrand || '',
-    humidor: nextHumidor,
-    qty: Math.max(1, draftForm.qty || 1),
-    origin: draftForm.origin.trim(),
-    wrapper: draftForm.wrapper.trim(),
-    strength: draftForm.strength.trim(),
-    size: '',
-    notes: '',
-    image: undefined,
-  });
+  try {
+    await saveUserAppData({
+      humidors: nextHumidors,
+      cigars: nextCigars,
+    });
 
-  window.setTimeout(() => {
-    newCigarNameRef.current?.focus();
-  }, 0);
+    setHumidors(nextHumidors);
+    setCigars(nextCigars);
+    setSelectedHumidor(nextHumidor);
+    setSelectedId(newCigar.id);
+    setIsCreatingNew(true);
+    setSearchTerm('');
+
+    setDraftForm({
+      name: '',
+      brand: trimmedBrand || '',
+      humidor: nextHumidor,
+      qty: Math.max(1, draftForm.qty || 1),
+      origin: draftForm.origin.trim(),
+      wrapper: draftForm.wrapper.trim(),
+      strength: draftForm.strength.trim(),
+      size: '',
+      notes: '',
+      image: undefined,
+    });
+
+    window.setTimeout(() => {
+      newCigarNameRef.current?.focus();
+    }, 0);
+  } catch (error) {
+    console.error('Failed to save cigar to Firestore:', error);
+  }
 }
 
   function updateDraftField(updates: Partial<FormState>) {
