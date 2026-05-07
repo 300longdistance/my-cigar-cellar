@@ -81,8 +81,6 @@ type AppData = {
   smokeLogs: SmokeLogEntry[];
   reflections: ReflectionDrafts;
   wishList: WishListItem[];
-  pairingTypes: PairingType[];
-  pairingLogs: PairingLog[];
   quickLogSelection: QuickLogSelection | null;
 };
 
@@ -139,14 +137,6 @@ function buildAppDataFromLocalStorage(): AppData {
         smokeLogs: safeParse<SmokeLogEntry[]>(localStorage.getItem('smokeLogs'), []),
     reflections: safeParse<ReflectionDrafts>(localStorage.getItem('smokeReflections'), {}),
     wishList: safeParse<WishListItem[]>(localStorage.getItem('wishList'), defaultWishList),
-    pairingTypes: safeParse<PairingType[]>(
-      localStorage.getItem('pairingTypes'),
-      defaultPairingTypes
-    ),
-    pairingLogs: safeParse<PairingLog[]>(
-      localStorage.getItem('pairingLogs'),
-      defaultPairingLogs
-    ),
     quickLogSelection: safeParse<QuickLogSelection | null>(
       localStorage.getItem('quickLogSelection'),
       null
@@ -168,7 +158,12 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
   const [pairingLogs, setPairingLogs] = useState<PairingLog[]>(defaultPairingLogs);
   const [quickLogSelection, setQuickLogSelection] = useState<QuickLogSelection | null>(null);
 
-  function applyAppData(data: AppData, normalizedCigars: StoredCigar[] = fallbackCigars) {
+  function applyAppData(
+  data: AppData,
+  normalizedCigars: StoredCigar[] = fallbackCigars,
+  normalizedPairingTypes: PairingType[] = defaultPairingTypes,
+  normalizedPairingLogs: PairingLog[] = defaultPairingLogs
+) {
   setIsApplyingCloudData(true);
 
   setHumidors(Array.isArray(data.humidors) ? data.humidors : defaultHumidors);
@@ -177,11 +172,15 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
   setReflections(data.reflections && typeof data.reflections === 'object' ? data.reflections : {});
   setWishList(Array.isArray(data.wishList) ? data.wishList : defaultWishList);
   setPairingTypes(
-    Array.isArray(data.pairingTypes) && data.pairingTypes.length > 0
-      ? data.pairingTypes
+    Array.isArray(normalizedPairingTypes) && normalizedPairingTypes.length > 0
+      ? normalizedPairingTypes
       : defaultPairingTypes
   );
-  setPairingLogs(Array.isArray(data.pairingLogs) ? data.pairingLogs : defaultPairingLogs);
+  setPairingLogs(
+    Array.isArray(normalizedPairingLogs)
+      ? normalizedPairingLogs
+      : defaultPairingLogs
+  );
   setQuickLogSelection(data.quickLogSelection ?? null);
 
   window.setTimeout(() => {
@@ -213,8 +212,14 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
   await saveUserAppData(localData);
 
   const tableCigars = await getSupabaseCigars();
+  const tablePairingTypes = await migrateAppDataPairingTypesToTable(
+    safeParse<PairingType[]>(localStorage.getItem('pairingTypes'), defaultPairingTypes)
+  );
+  const tablePairingLogs = await migrateAppDataPairingLogsToTable(
+    safeParse<PairingLog[]>(localStorage.getItem('pairingLogs'), defaultPairingLogs)
+  );
 
-  applyAppData(localData, tableCigars);
+  applyAppData(localData, tableCigars, tablePairingTypes, tablePairingLogs);
 
   setHasLoadedStorage(true);
   return;
@@ -223,19 +228,20 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
       const tableCigars = await getSupabaseCigars();
 const tableSmokeLogs = await migrateAppDataSmokeLogsToTable(cloudData.smokeLogs ?? []);
 const tablePairingTypes = await migrateAppDataPairingTypesToTable(
-  cloudData.pairingTypes ?? defaultPairingTypes
+  safeParse<PairingType[]>(localStorage.getItem('pairingTypes'), defaultPairingTypes)
 );
 const tablePairingLogs = await migrateAppDataPairingLogsToTable(
-  cloudData.pairingLogs ?? defaultPairingLogs
+  safeParse<PairingLog[]>(localStorage.getItem('pairingLogs'), defaultPairingLogs)
 );
+
 applyAppData(
   {
     ...cloudData,
     smokeLogs: tableSmokeLogs,
-    pairingTypes: tablePairingTypes,
-    pairingLogs: tablePairingLogs,
   },
-  tableCigars
+  tableCigars,
+  tablePairingTypes,
+  tablePairingLogs
 );
     } catch (error) {
       console.error('Failed to load Supabase app data:', error);
@@ -288,8 +294,6 @@ applyAppData(
   smokeLogs,
   reflections,
   wishList,
-  pairingTypes,
-  pairingLogs,
   quickLogSelection,
 };
 
@@ -298,16 +302,19 @@ applyAppData(
     });
 
     saveSupabaseCigars(cigars).catch((error) => {
-      console.error('Failed to save normalized Supabase cigars:', error);
-    });
-    saveSupabaseSmokeLogs(smokeLogs).catch((error) => {
-      saveSupabasePairingTypes(pairingTypes).catch((error) => {
+  console.error('Failed to save normalized Supabase cigars:', error);
+});
+
+saveSupabaseSmokeLogs(smokeLogs).catch((error) => {
+  console.error('Failed to save normalized Supabase smoke logs:', error);
+});
+
+saveSupabasePairingTypes(pairingTypes).catch((error) => {
   console.error('Failed to save normalized Supabase pairing types:', error);
 });
+
 saveSupabasePairingLogs(pairingLogs).catch((error) => {
   console.error('Failed to save normalized Supabase pairing logs:', error);
-});
-  console.error('Failed to save normalized Supabase smoke logs:', error);
 });
   }, [
     hasLoadedStorage,
