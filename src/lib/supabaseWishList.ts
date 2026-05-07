@@ -6,7 +6,6 @@ type SupabaseWishListRow = {
   user_id: string;
   legacy_id: number | null;
   wish_key: string;
-
   name: string;
   brand: string;
   vitola: string;
@@ -30,6 +29,17 @@ function getWishKey(item: WishListItem) {
   ].join('|');
 }
 
+function isRealWishListItem(item: WishListItem) {
+  const name = normalizeText(item.name);
+  const brand = normalizeText(item.brand);
+
+  if (!name) return false;
+  if (name === 'new wish item') return false;
+  if (brand === 'brand' && name === 'new wish item') return false;
+
+  return true;
+}
+
 function rowToWishListItem(row: SupabaseWishListRow): WishListItem {
   return {
     id: row.legacy_id ?? row.id,
@@ -40,11 +50,7 @@ function rowToWishListItem(row: SupabaseWishListRow): WishListItem {
     origin: row.origin,
     strength: row.strength,
     notes: row.notes,
-    priority:
-      row.priority === 'High' ||
-      row.priority === 'Low'
-        ? row.priority
-        : 'Medium',
+    priority: row.priority === 'High' || row.priority === 'Low' ? row.priority : 'Medium',
   };
 }
 
@@ -53,7 +59,6 @@ function wishListItemToRow(item: WishListItem, userId: string) {
     user_id: userId,
     legacy_id: item.id,
     wish_key: getWishKey(item),
-
     name: item.name ?? '',
     brand: item.brand ?? '',
     vitola: item.vitola ?? '',
@@ -65,28 +70,11 @@ function wishListItemToRow(item: WishListItem, userId: string) {
   };
 }
 
-function mergeWishListItems(
-  existing: WishListItem | undefined,
-  incoming: WishListItem
-) {
-  if (!existing) return incoming;
-
-  return {
-    ...existing,
-    ...incoming,
-    notes: incoming.notes || existing.notes,
-    priority: incoming.priority || existing.priority,
-  };
-}
-
 function dedupeWishList(items: WishListItem[]) {
-  const itemMap = new Map<string, WishListItem>();
+  const itemMap = new Map<number, WishListItem>();
 
-  items.forEach((item) => {
-    const key = getWishKey(item);
-    const existing = itemMap.get(key);
-
-    itemMap.set(key, mergeWishListItems(existing, item));
+  items.filter(isRealWishListItem).forEach((item) => {
+    itemMap.set(item.id, item);
   });
 
   return Array.from(itemMap.values());
@@ -97,9 +85,7 @@ export async function getSupabaseWishList() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return [];
-  }
+  if (!user) return [];
 
   const { data, error } = await supabase
     .from('wish_list')
@@ -107,13 +93,9 @@ export async function getSupabaseWishList() {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 
-  return dedupeWishList(
-    ((data ?? []) as SupabaseWishListRow[]).map(rowToWishListItem)
-  );
+  return dedupeWishList(((data ?? []) as SupabaseWishListRow[]).map(rowToWishListItem));
 }
 
 export async function saveSupabaseWishList(items: WishListItem[]) {
@@ -121,39 +103,25 @@ export async function saveSupabaseWishList(items: WishListItem[]) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    return;
-  }
+  if (!user) return;
 
   const dedupedItems = dedupeWishList(items);
 
-  if (dedupedItems.length === 0) {
-    return;
-  }
+  if (dedupedItems.length === 0) return;
 
-  const rows = dedupedItems.map((item) =>
-    wishListItemToRow(item, user.id)
-  );
+  const rows = dedupedItems.map((item) => wishListItemToRow(item, user.id));
 
-  const { error } = await supabase
-    .from('wish_list')
-    .upsert(rows, {
-      onConflict: 'user_id,wish_key',
-    });
+  const { error } = await supabase.from('wish_list').upsert(rows, {
+    onConflict: 'user_id,legacy_id',
+  });
 
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 }
 
-export async function migrateAppDataWishListToTable(
-  items: WishListItem[]
-) {
+export async function migrateAppDataWishListToTable(items: WishListItem[]) {
   const existingItems = await getSupabaseWishList();
 
-  if (existingItems.length > 0) {
-    return existingItems;
-  }
+  if (existingItems.length > 0) return existingItems;
 
   const dedupedItems = dedupeWishList(items);
 
