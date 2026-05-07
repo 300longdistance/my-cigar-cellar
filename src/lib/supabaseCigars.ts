@@ -5,6 +5,7 @@ type SupabaseCigarRow = {
   id: number;
   user_id: string;
   legacy_id: number | null;
+  cigar_key: string | null;
   name: string;
   brand: string;
   humidor: string;
@@ -17,6 +18,20 @@ type SupabaseCigarRow = {
   favorite: boolean;
   image: string | null;
 };
+
+function normalizeText(value: string | undefined) {
+  return (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function getCigarKey(cigar: StoredCigar) {
+  return [
+    normalizeText(cigar.brand),
+    normalizeText(cigar.name),
+    normalizeText(cigar.humidor),
+    normalizeText(cigar.size),
+    normalizeText(cigar.wrapper),
+  ].join('|');
+}
 
 function rowToStoredCigar(row: SupabaseCigarRow): StoredCigar {
   return {
@@ -39,6 +54,7 @@ function storedCigarToRow(cigar: StoredCigar, userId: string) {
   return {
     user_id: userId,
     legacy_id: cigar.id,
+    cigar_key: getCigarKey(cigar),
     name: cigar.name ?? '',
     brand: cigar.brand ?? '',
     humidor: cigar.humidor ?? '',
@@ -51,6 +67,31 @@ function storedCigarToRow(cigar: StoredCigar, userId: string) {
     favorite: cigar.favorite ?? false,
     image: cigar.image ?? null,
   };
+}
+
+function mergeCigars(existing: StoredCigar | undefined, incoming: StoredCigar) {
+  if (!existing) return incoming;
+
+  return {
+    ...existing,
+    ...incoming,
+    qty: Math.max(existing.qty ?? 0, incoming.qty ?? 0),
+    image: incoming.image ?? existing.image,
+    notes: incoming.notes || existing.notes,
+    favorite: existing.favorite || incoming.favorite,
+  };
+}
+
+function dedupeCigars(cigars: StoredCigar[]) {
+  const cigarMap = new Map<string, StoredCigar>();
+
+  cigars.forEach((cigar) => {
+    const key = getCigarKey(cigar);
+    const existing = cigarMap.get(key);
+    cigarMap.set(key, mergeCigars(existing, cigar));
+  });
+
+  return Array.from(cigarMap.values());
 }
 
 export async function getSupabaseCigars() {
@@ -72,7 +113,7 @@ export async function getSupabaseCigars() {
     throw error;
   }
 
-  return ((data ?? []) as SupabaseCigarRow[]).map(rowToStoredCigar);
+  return dedupeCigars(((data ?? []) as SupabaseCigarRow[]).map(rowToStoredCigar));
 }
 
 export async function saveSupabaseCigars(cigars: StoredCigar[]) {
@@ -84,16 +125,18 @@ export async function saveSupabaseCigars(cigars: StoredCigar[]) {
     return;
   }
 
-  if (cigars.length === 0) {
+  const dedupedCigars = dedupeCigars(cigars);
+
+  if (dedupedCigars.length === 0) {
     return;
   }
 
-  const rows = cigars.map((cigar) => storedCigarToRow(cigar, user.id));
+  const rows = dedupedCigars.map((cigar) => storedCigarToRow(cigar, user.id));
 
   const { error } = await supabase
     .from('cigars')
     .upsert(rows, {
-      onConflict: 'user_id,legacy_id',
+      onConflict: 'user_id,cigar_key',
     });
 
   if (error) {
@@ -119,11 +162,13 @@ export async function replaceSupabaseCigars(cigars: StoredCigar[]) {
     throw deleteResult.error;
   }
 
-  if (cigars.length === 0) {
+  const dedupedCigars = dedupeCigars(cigars);
+
+  if (dedupedCigars.length === 0) {
     return;
   }
 
-  const rows = cigars.map((cigar) => storedCigarToRow(cigar, user.id));
+  const rows = dedupedCigars.map((cigar) => storedCigarToRow(cigar, user.id));
 
   const insertResult = await supabase.from('cigars').insert(rows);
 
@@ -139,7 +184,9 @@ export async function migrateAppDataCigarsToTable(cigars: StoredCigar[]) {
     return existingCigars;
   }
 
-  await saveSupabaseCigars(cigars);
+  const dedupedCigars = dedupeCigars(cigars);
 
-  return cigars;
+  await saveSupabaseCigars(dedupedCigars);
+
+  return dedupedCigars;
 }
