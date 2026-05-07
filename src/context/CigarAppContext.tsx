@@ -36,6 +36,10 @@ import {
   migrateAppDataHumidorsToTable,
   saveSupabaseHumidors,
 } from '@/lib/supabaseHumidors';
+import {
+  migrateAppDataReflectionsToTable,
+  saveSupabaseReflections,
+} from '@/lib/supabaseReflections';
 import type { PairingLog, PairingType } from '@/types/pairing';
 
 export type StoredCigar = {
@@ -219,6 +223,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
       if (!cloudData) {
   await saveUserAppData(localData);
 const tableHumidors = await migrateAppDataHumidorsToTable(localData.humidors);
+const tableReflections = await migrateAppDataReflectionsToTable(localData.reflections);
   const tableCigars = await getSupabaseCigars();
 
 const tablePairingTypes = await migrateAppDataPairingTypesToTable(
@@ -235,6 +240,7 @@ applyAppData(
   {
     ...localData,
     humidors: tableHumidors,
+    reflections: tableReflections,
     wishList: tableWishList,
   },
   tableCigars,
@@ -246,6 +252,7 @@ applyAppData(
   return;
 }
 const tableHumidors = await migrateAppDataHumidorsToTable(cloudData.humidors ?? defaultHumidors);
+const tableReflections = await migrateAppDataReflectionsToTable(cloudData.reflections ?? {});
       const tableCigars = await getSupabaseCigars();
 
 const tableSmokeLogs = await migrateAppDataSmokeLogsToTable(cloudData.smokeLogs ?? []);
@@ -266,6 +273,7 @@ applyAppData(
   {
     ...cloudData,
     humidors: tableHumidors,
+    reflections: tableReflections,
     smokeLogs: tableSmokeLogs,
     wishList: tableWishList,
   },
@@ -351,6 +359,9 @@ saveSupabaseWishList(wishList).catch((error) => {
 });
 saveSupabaseHumidors(humidors).catch((error) => {
   console.error('Failed to save normalized Supabase humidors:', error);
+});
+saveSupabaseReflections(reflections).catch((error) => {
+  console.error('Failed to save normalized Supabase reflections:', error);
 });
   }, [
     hasLoadedStorage,
