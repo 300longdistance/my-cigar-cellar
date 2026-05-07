@@ -28,6 +28,10 @@ import {
   migrateAppDataPairingLogsToTable,
   saveSupabasePairingLogs,
 } from '@/lib/supabasePairingLogs';
+import {
+  migrateAppDataWishListToTable,
+  saveSupabaseWishList,
+} from '@/lib/supabaseWishList';
 import type { PairingLog, PairingType } from '@/types/pairing';
 
 export type StoredCigar = {
@@ -212,26 +216,45 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
   await saveUserAppData(localData);
 
   const tableCigars = await getSupabaseCigars();
-  const tablePairingTypes = await migrateAppDataPairingTypesToTable(
-    safeParse<PairingType[]>(localStorage.getItem('pairingTypes'), defaultPairingTypes)
-  );
-  const tablePairingLogs = await migrateAppDataPairingLogsToTable(
-    safeParse<PairingLog[]>(localStorage.getItem('pairingLogs'), defaultPairingLogs)
-  );
 
-  applyAppData(localData, tableCigars, tablePairingTypes, tablePairingLogs);
+const tablePairingTypes = await migrateAppDataPairingTypesToTable(
+  safeParse<PairingType[]>(localStorage.getItem('pairingTypes'), defaultPairingTypes)
+);
+
+const tablePairingLogs = await migrateAppDataPairingLogsToTable(
+  safeParse<PairingLog[]>(localStorage.getItem('pairingLogs'), defaultPairingLogs)
+);
+
+const tableWishList = await migrateAppDataWishListToTable(localData.wishList);
+
+applyAppData(
+  {
+    ...localData,
+    wishList: tableWishList,
+  },
+  tableCigars,
+  tablePairingTypes,
+  tablePairingLogs
+);
 
   setHasLoadedStorage(true);
   return;
 }
 
       const tableCigars = await getSupabaseCigars();
+
 const tableSmokeLogs = await migrateAppDataSmokeLogsToTable(cloudData.smokeLogs ?? []);
+
 const tablePairingTypes = await migrateAppDataPairingTypesToTable(
   safeParse<PairingType[]>(localStorage.getItem('pairingTypes'), defaultPairingTypes)
 );
+
 const tablePairingLogs = await migrateAppDataPairingLogsToTable(
   safeParse<PairingLog[]>(localStorage.getItem('pairingLogs'), defaultPairingLogs)
+);
+
+const tableWishList = await migrateAppDataWishListToTable(
+  cloudData.wishList ?? defaultWishList
 );
 
 applyAppData(
