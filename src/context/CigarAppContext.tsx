@@ -20,6 +20,10 @@ import {
   migrateAppDataSmokeLogsToTable,
   saveSupabaseSmokeLogs,
 } from '@/lib/supabaseSmokeLogs';
+import {
+  migrateAppDataPairingTypesToTable,
+  saveSupabasePairingTypes,
+} from '@/lib/supabasePairingTypes';
 import type { PairingLog, PairingType } from '@/types/pairing';
 
 export type StoredCigar = {
@@ -214,11 +218,15 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
 
       const tableCigars = await getSupabaseCigars();
 const tableSmokeLogs = await migrateAppDataSmokeLogsToTable(cloudData.smokeLogs ?? []);
+const tablePairingTypes = await migrateAppDataPairingTypesToTable(
+  cloudData.pairingTypes ?? defaultPairingTypes
+);
 
 applyAppData(
   {
     ...cloudData,
     smokeLogs: tableSmokeLogs,
+    pairingTypes: tablePairingTypes,
   },
   tableCigars
 );
@@ -286,6 +294,9 @@ applyAppData(
       console.error('Failed to save normalized Supabase cigars:', error);
     });
     saveSupabaseSmokeLogs(smokeLogs).catch((error) => {
+      saveSupabasePairingTypes(pairingTypes).catch((error) => {
+  console.error('Failed to save normalized Supabase pairing types:', error);
+});
   console.error('Failed to save normalized Supabase smoke logs:', error);
 });
   }, [
