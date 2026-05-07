@@ -11,6 +11,11 @@ import {
 import type { User } from '@supabase/supabase-js';
 import { getUserAppData, saveUserAppData } from '@/lib/supabaseAppData';
 import { supabase } from '@/lib/supabase/client';
+import {
+  getSupabaseCigars,
+  migrateAppDataCigarsToTable,
+  saveSupabaseCigars,
+} from '@/lib/supabaseCigars';
 import type { PairingLog, PairingType } from '@/types/pairing';
 
 export type StoredCigar = {
@@ -192,16 +197,25 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
 
     try {
       const cloudData = await getUserAppData<AppData>();
+      const localData = buildAppDataFromLocalStorage();
 
       if (!cloudData) {
-        const localData = buildAppDataFromLocalStorage();
         await saveUserAppData(localData);
-        applyAppData(localData);
+        const migratedCigars = await migrateAppDataCigarsToTable(localData.cigars);
+        applyAppData({
+          ...localData,
+          cigars: migratedCigars,
+        });
         setHasLoadedStorage(true);
         return;
       }
 
-      applyAppData(cloudData);
+      const tableCigars = await migrateAppDataCigarsToTable(cloudData.cigars ?? []);
+
+      applyAppData({
+        ...cloudData,
+        cigars: tableCigars,
+      });
     } catch (error) {
       console.error('Failed to load Supabase app data:', error);
     }
@@ -261,6 +275,10 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
 
     saveUserAppData(appData).catch((error) => {
       console.error('Failed to save Supabase app data:', error);
+    });
+
+    saveSupabaseCigars(cigars).catch((error) => {
+      console.error('Failed to save normalized Supabase cigars:', error);
     });
   }, [
     hasLoadedStorage,
