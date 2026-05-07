@@ -1,14 +1,61 @@
-import Image from "next/image";
-import Link from "next/link";
+'use client';
+
+import Image from 'next/image';
+import Link from 'next/link';
+import { useMemo } from 'react';
+import { useCigarApp } from '@/context/CigarAppContext';
 
 export default function HomePage() {
+  const { hasLoadedStorage, humidors, cigars, smokeLogs } = useCigarApp();
+
+  const currentHumidor = useMemo(() => {
+    if (humidors.length > 0) return humidors[0];
+
+    const firstCigarHumidor = cigars.find((cigar) => cigar.humidor)?.humidor;
+    return firstCigarHumidor || 'Start Your First Humidor';
+  }, [humidors, cigars]);
+
+  const currentHumidorCigars = useMemo(() => {
+    if (!currentHumidor || currentHumidor === 'Start Your First Humidor') {
+      return [];
+    }
+
+    return cigars.filter((cigar) => cigar.humidor === currentHumidor);
+  }, [cigars, currentHumidor]);
+
+  const currentHumidorQuantity = useMemo(() => {
+    return currentHumidorCigars.reduce((total, cigar) => total + (cigar.qty ?? 0), 0);
+  }, [currentHumidorCigars]);
+
+  const recentSmoke = useMemo(() => {
+    return [...smokeLogs].sort(
+      (a, b) =>
+        new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime()
+    )[0];
+  }, [smokeLogs]);
+
+  const currentHumidorLabel = hasLoadedStorage
+    ? currentHumidor
+    : 'Loading Humidor';
+
+  const currentQuantityLabel =
+    currentHumidor === 'Start Your First Humidor'
+      ? '0 Cigars'
+      : `${currentHumidorQuantity} ${
+          currentHumidorQuantity === 1 ? 'Cigar' : 'Cigars'
+        }`;
+
+  const recentSmokeLabel = recentSmoke
+    ? `${recentSmoke.brand} ${recentSmoke.cigarName}`
+    : 'No Recent Smokes';
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col items-center px-3 pb-4 pt-2 sm:px-4 sm:pb-6 sm:pt-3 landscape:max-w-none landscape:px-6 landscape:pt-3">
         <header className="w-full text-center">
           <h1
             className="text-center text-[27px] font-semibold tracking-[0.06em] text-amber-300 sm:text-4xl md:text-6xl landscape:text-[42px]"
-            style={{ fontFamily: "var(--font-cinzel)" }}
+            style={{ fontFamily: 'var(--font-cinzel)' }}
           >
             MY CIGAR CELLAR
           </h1>
@@ -22,7 +69,11 @@ export default function HomePage() {
             </p>
 
             <p className="mt-1 text-center text-[19px] font-semibold text-white sm:mt-2 sm:text-2xl md:text-4xl">
-              Start Your First Humidor
+              {currentHumidorLabel}
+            </p>
+
+            <p className="mt-1 text-center text-[14px] font-semibold text-stone-500 sm:text-lg md:text-2xl">
+              {currentQuantityLabel}
             </p>
 
             <div className="mx-auto mt-3 h-px w-full max-w-2xl bg-stone-800 sm:mt-5" />
@@ -35,6 +86,7 @@ export default function HomePage() {
                   src="/images/main-home-v2.png"
                   alt="My Cigar Cellar main scene"
                   fill
+                  sizes="100vw"
                   className="object-cover object-[center_35%] sm:object-contain"
                   priority
                 />
@@ -44,10 +96,10 @@ export default function HomePage() {
                   aria-label="Open Humidor"
                   className="group absolute z-20 block"
                   style={{
-                    top: "36%",
-                    left: "39%",
-                    width: "45%",
-                    height: "22%",
+                    top: '36%',
+                    left: '39%',
+                    width: '45%',
+                    height: '22%',
                   }}
                 >
                   <div className="pointer-events-none absolute left-[95%] top-[120%] opacity-100 transition duration-200 sm:left-[90%] sm:top-[70%] sm:opacity-0 sm:group-hover:opacity-100">
@@ -62,10 +114,10 @@ export default function HomePage() {
                   aria-label="Open Pairings"
                   className="group absolute z-20 block"
                   style={{
-                    top: "43%",
-                    left: "17%",
-                    width: "25%",
-                    height: "18%",
+                    top: '43%',
+                    left: '17%',
+                    width: '25%',
+                    height: '18%',
                   }}
                 >
                   <div className="pointer-events-none absolute left-[-45%] top-[-10%] opacity-100 transition duration-200 sm:left-[-30%] sm:top-[-5%] sm:opacity-0 sm:group-hover:opacity-100">
@@ -80,10 +132,10 @@ export default function HomePage() {
                   aria-label="Open Notebook"
                   className="group absolute z-20 block"
                   style={{
-                    top: "65%",
-                    left: "12%",
-                    width: "42%",
-                    height: "22%",
+                    top: '65%',
+                    left: '12%',
+                    width: '42%',
+                    height: '22%',
                   }}
                 >
                   <div className="pointer-events-none absolute left-[-11%] top-[125%] opacity-100 transition duration-200 sm:left-[8%] sm:top-[73%] sm:opacity-0 sm:group-hover:opacity-100">
@@ -98,10 +150,10 @@ export default function HomePage() {
                   aria-label="Open Quick Log"
                   className="group absolute z-20 block"
                   style={{
-                    top: "66%",
-                    left: "54%",
-                    width: "32%",
-                    height: "20%",
+                    top: '66%',
+                    left: '54%',
+                    width: '32%',
+                    height: '20%',
                   }}
                 >
                   <div className="pointer-events-none absolute left-[50%] top-[105%] opacity-100 transition duration-200 sm:left-[40%] sm:top-[52%] sm:opacity-0 sm:group-hover:opacity-100">
@@ -122,7 +174,7 @@ export default function HomePage() {
             </p>
 
             <p className="mt-1 text-center text-[18px] font-semibold text-white sm:mt-2 sm:text-2xl md:text-4xl">
-              No Recent Smokes
+              {recentSmokeLabel}
             </p>
           </section>
         </div>
@@ -135,11 +187,11 @@ export default function HomePage() {
             </p>
 
             <p className="mt-2 text-[20px] font-semibold text-white">
-              Home Humidor
+              {currentHumidorLabel}
             </p>
 
             <p className="mt-2 text-[16px] font-semibold text-stone-500">
-              0 Cigars
+              {currentQuantityLabel}
             </p>
           </aside>
 
@@ -149,6 +201,7 @@ export default function HomePage() {
                 src="/images/main-home-v2.png"
                 alt="My Cigar Cellar main scene"
                 fill
+                sizes="66vw"
                 className="object-contain"
                 priority
               />
@@ -158,10 +211,10 @@ export default function HomePage() {
                 aria-label="Open Humidor"
                 className="group absolute z-20 block"
                 style={{
-                  top: "36%",
-                  left: "39%",
-                  width: "45%",
-                  height: "22%",
+                  top: '36%',
+                  left: '39%',
+                  width: '45%',
+                  height: '22%',
                 }}
               />
 
@@ -170,10 +223,10 @@ export default function HomePage() {
                 aria-label="Open Pairings"
                 className="group absolute z-20 block"
                 style={{
-                  top: "43%",
-                  left: "17%",
-                  width: "25%",
-                  height: "18%",
+                  top: '43%',
+                  left: '17%',
+                  width: '25%',
+                  height: '18%',
                 }}
               />
 
@@ -182,10 +235,10 @@ export default function HomePage() {
                 aria-label="Open Notebook"
                 className="group absolute z-20 block"
                 style={{
-                  top: "65%",
-                  left: "12%",
-                  width: "42%",
-                  height: "22%",
+                  top: '65%',
+                  left: '12%',
+                  width: '42%',
+                  height: '22%',
                 }}
               />
 
@@ -194,10 +247,10 @@ export default function HomePage() {
                 aria-label="Open Quick Log"
                 className="group absolute z-20 block"
                 style={{
-                  top: "66%",
-                  left: "54%",
-                  width: "32%",
-                  height: "20%",
+                  top: '66%',
+                  left: '54%',
+                  width: '32%',
+                  height: '20%',
                 }}
               />
             </div>
@@ -209,7 +262,7 @@ export default function HomePage() {
             </p>
 
             <p className="mt-2 text-[20px] font-semibold text-white">
-              No recent smoke
+              {recentSmokeLabel}
             </p>
           </aside>
         </div>
