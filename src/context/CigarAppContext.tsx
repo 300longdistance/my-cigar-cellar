@@ -261,6 +261,7 @@ applyAppData(
   {
     ...cloudData,
     smokeLogs: tableSmokeLogs,
+    wishList: tableWishList,
   },
   tableCigars,
   tablePairingTypes,
@@ -338,6 +339,9 @@ saveSupabasePairingTypes(pairingTypes).catch((error) => {
 
 saveSupabasePairingLogs(pairingLogs).catch((error) => {
   console.error('Failed to save normalized Supabase pairing logs:', error);
+});
+saveSupabaseWishList(wishList).catch((error) => {
+  console.error('Failed to save normalized Supabase wish list:', error);
 });
   }, [
     hasLoadedStorage,
