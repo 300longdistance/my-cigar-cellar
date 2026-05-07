@@ -70,7 +70,6 @@ export type QuickLogSelection = {
 
 type AppData = {
   humidors: string[];
-  cigars: StoredCigar[];
   smokeLogs: SmokeLogEntry[];
   reflections: ReflectionDrafts;
   wishList: WishListItem[];
@@ -129,8 +128,7 @@ function safeParse<T>(value: string | null, fallback: T): T {
 function buildAppDataFromLocalStorage(): AppData {
   return {
     humidors: safeParse<string[]>(localStorage.getItem('humidors'), defaultHumidors),
-    cigars: safeParse<StoredCigar[]>(localStorage.getItem('cigars'), fallbackCigars),
-    smokeLogs: safeParse<SmokeLogEntry[]>(localStorage.getItem('smokeLogs'), []),
+        smokeLogs: safeParse<SmokeLogEntry[]>(localStorage.getItem('smokeLogs'), []),
     reflections: safeParse<ReflectionDrafts>(localStorage.getItem('smokeReflections'), {}),
     wishList: safeParse<WishListItem[]>(localStorage.getItem('wishList'), defaultWishList),
     pairingTypes: safeParse<PairingType[]>(
@@ -162,26 +160,26 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
   const [pairingLogs, setPairingLogs] = useState<PairingLog[]>(defaultPairingLogs);
   const [quickLogSelection, setQuickLogSelection] = useState<QuickLogSelection | null>(null);
 
-  function applyAppData(data: AppData) {
-    setIsApplyingCloudData(true);
+  function applyAppData(data: AppData, normalizedCigars: StoredCigar[] = fallbackCigars) {
+  setIsApplyingCloudData(true);
 
-    setHumidors(Array.isArray(data.humidors) ? data.humidors : defaultHumidors);
-    setCigars(Array.isArray(data.cigars) ? data.cigars : fallbackCigars);
-    setSmokeLogs(Array.isArray(data.smokeLogs) ? data.smokeLogs : []);
-    setReflections(data.reflections && typeof data.reflections === 'object' ? data.reflections : {});
-    setWishList(Array.isArray(data.wishList) ? data.wishList : defaultWishList);
-    setPairingTypes(
-      Array.isArray(data.pairingTypes) && data.pairingTypes.length > 0
-        ? data.pairingTypes
-        : defaultPairingTypes
-    );
-    setPairingLogs(Array.isArray(data.pairingLogs) ? data.pairingLogs : defaultPairingLogs);
-    setQuickLogSelection(data.quickLogSelection ?? null);
+  setHumidors(Array.isArray(data.humidors) ? data.humidors : defaultHumidors);
+  setCigars(Array.isArray(normalizedCigars) ? normalizedCigars : fallbackCigars);
+  setSmokeLogs(Array.isArray(data.smokeLogs) ? data.smokeLogs : []);
+  setReflections(data.reflections && typeof data.reflections === 'object' ? data.reflections : {});
+  setWishList(Array.isArray(data.wishList) ? data.wishList : defaultWishList);
+  setPairingTypes(
+    Array.isArray(data.pairingTypes) && data.pairingTypes.length > 0
+      ? data.pairingTypes
+      : defaultPairingTypes
+  );
+  setPairingLogs(Array.isArray(data.pairingLogs) ? data.pairingLogs : defaultPairingLogs);
+  setQuickLogSelection(data.quickLogSelection ?? null);
 
-    window.setTimeout(() => {
-      setIsApplyingCloudData(false);
-    }, 0);
-  }
+  window.setTimeout(() => {
+    setIsApplyingCloudData(false);
+  }, 0);
+}
 
   function refreshFromStorage() {
     applyAppData(buildAppDataFromLocalStorage());
@@ -204,24 +202,26 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
       const localData = buildAppDataFromLocalStorage();
 
       if (!cloudData) {
-        await saveUserAppData(localData);
-        const migratedCigars = await migrateAppDataCigarsToTable(localData.cigars);
-        applyAppData({
-          ...localData,
-          cigars: migratedCigars,
-        });
-        setHasLoadedStorage(true);
-        return;
-      }
+  await saveUserAppData(localData);
 
-      const tableCigars = await migrateAppDataCigarsToTable(cloudData.cigars ?? []);
+  const tableCigars = await getSupabaseCigars();
+
+  applyAppData(localData, tableCigars);
+
+  setHasLoadedStorage(true);
+  return;
+}
+
+      const tableCigars = await getSupabaseCigars();
 const tableSmokeLogs = await migrateAppDataSmokeLogsToTable(cloudData.smokeLogs ?? []);
 
-      applyAppData({
-  ...cloudData,
-  cigars: tableCigars,
-  smokeLogs: tableSmokeLogs,
-});
+applyAppData(
+  {
+    ...cloudData,
+    smokeLogs: tableSmokeLogs,
+  },
+  tableCigars
+);
     } catch (error) {
       console.error('Failed to load Supabase app data:', error);
     }
@@ -269,15 +269,14 @@ const tableSmokeLogs = await migrateAppDataSmokeLogsToTable(cloudData.smokeLogs 
     if (isApplyingCloudData) return;
 
     const appData: AppData = {
-      humidors,
-      cigars,
-      smokeLogs,
-      reflections,
-      wishList,
-      pairingTypes,
-      pairingLogs,
-      quickLogSelection,
-    };
+  humidors,
+  smokeLogs,
+  reflections,
+  wishList,
+  pairingTypes,
+  pairingLogs,
+  quickLogSelection,
+};
 
     saveUserAppData(appData).catch((error) => {
       console.error('Failed to save Supabase app data:', error);

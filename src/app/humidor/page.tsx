@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useCigarApp } from '@/context/CigarAppContext';
 import { saveUserAppData } from '@/lib/supabaseAppData';
+import { uploadCigarImage } from '@/lib/supabaseImages';
 
 type Cigar = {
   id: number;
@@ -198,6 +199,7 @@ const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [editingSmokeLogId, setEditingSmokeLogId] = useState<number | null>(null);
   const [smokeDraft, setSmokeDraft] = useState<SmokeLogDraft>(emptySmokeDraft);
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const newImageInputRef = useRef<HTMLInputElement | null>(null);
@@ -1120,37 +1122,42 @@ function confirmRemoveSelectedCigar() {
     setDraftForm((current) => ({ ...current, image }));
   }
 
-  function handleSelectedImageChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file || !selectedCigar || isCreatingNew) return;
+  async function handleSelectedImageChange(event: ChangeEvent<HTMLInputElement>) {
+  const file = event.target.files?.[0];
+  if (!file || !selectedCigar || isCreatingNew) return;
 
-    const reader = new FileReader();
+  try {
+    setIsUploadingImage(true);
 
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        updateSelectedCigarImage(result);
-      }
-    };
+    const imageUrl = await uploadCigarImage(file, selectedCigar.id);
 
-    reader.readAsDataURL(file);
+    updateSelectedCigarImage(imageUrl);
+  } catch (error) {
+    console.error('Failed to upload selected cigar image:', error);
+  } finally {
+    setIsUploadingImage(false);
+    event.target.value = '';
   }
+}
 
-  function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
+  const file = event.target.files?.[0];
+  if (!file) return;
 
-    const reader = new FileReader();
+  try {
+    setIsUploadingImage(true);
 
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        setDraftForm((current) => ({ ...current, image: result }));
-      }
-    };
+    const temporaryImageId = `new-${Date.now()}`;
+    const imageUrl = await uploadCigarImage(file, temporaryImageId);
 
-    reader.readAsDataURL(file);
+    setDraftForm((current) => ({ ...current, image: imageUrl }));
+  } catch (error) {
+    console.error('Failed to upload new cigar image:', error);
+  } finally {
+    setIsUploadingImage(false);
+    event.target.value = '';
   }
+}
 
   function formatLogDate(dateString: string) {
     return new Date(dateString).toLocaleDateString(undefined, {
@@ -2667,7 +2674,7 @@ function confirmRemoveSelectedCigar() {
                   <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={triggerNewImagePicker}
+                      onClick={triggerImagePicker}
                       className="flex h-[96px] w-[96px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] bg-white transition hover:brightness-95"
                       aria-label={draftForm.image ? 'Change cigar image' : 'Add cigar image'}
                       title={draftForm.image ? 'Click to change image' : 'Click to add image'}
@@ -2680,7 +2687,7 @@ function confirmRemoveSelectedCigar() {
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center px-3 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-[#8a5a20]">
-                          Add Image
+                          {isUploadingImage ? 'Uploading...' : 'Add Image'}
                         </div>
                       )}
                     </button>
@@ -2700,13 +2707,13 @@ function confirmRemoveSelectedCigar() {
 
                       <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
                         <input
-                          ref={newImageInputRef}
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          onChange={handleNewImageChange}
-                          className="hidden"
-                        />
+  ref={imageInputRef}
+  type="file"
+  accept="image/*"
+  capture="environment"
+  onChange={handleSelectedImageChange}
+  className="hidden"
+/>
                       </div>
                     </div>
                   </div>
