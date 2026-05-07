@@ -2,47 +2,12 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-
-type StoredCigar = {
-  id: number;
-  name: string;
-  brand: string;
-  humidor: string;
-  qty: number;
-  origin?: string;
-  wrapper?: string;
-  strength?: string;
-  size?: string;
-  notes?: string;
-  favorite?: boolean;
-  image?: string;
-};
-
-type SmokeLogEntry = {
-  id: number;
-  cigarId: number;
-  cigarName: string;
-  brand: string;
-  humidor: string;
-  rating: number;
-  notes: string;
-  pairing: string;
-  loggedAt: string;
-};
-
-type ReflectionDrafts = Record<number, string>;
-
-type WishListItem = {
-  id: number;
-  name: string;
-  brand: string;
-  vitola: string;
-  wrapper: string;
-  origin: string;
-  strength: string;
-  notes: string;
-  priority: 'High' | 'Medium' | 'Low';
-};
+import {
+  type ReflectionDrafts,
+  type StoredCigar,
+  type WishListItem,
+  useCigarApp,
+} from '@/context/CigarAppContext';
 
 const fallbackCigars: StoredCigar[] = [];
 
@@ -71,14 +36,18 @@ function formatDateTime(value: string) {
 }
 
 export default function SmokesPage() {
+  const {
+    cigars,
+    setCigars,
+    smokeLogs,
+    wishList,
+    setWishList,
+  } = useCigarApp();
+
   const [tab, setTab] = useState<'recent' | 'wish'>('recent');
-  const [cigars, setCigars] = useState<StoredCigar[]>(fallbackCigars);
-  const [smokeLogs, setSmokeLogs] = useState<SmokeLogEntry[]>([]);
   const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
   const [reflectionDrafts, setReflectionDrafts] = useState<ReflectionDrafts>({});
   const [savedMessage, setSavedMessage] = useState('');
-
-  const [wishList, setWishList] = useState<WishListItem[]>(defaultWishList);
 const [selectedWishId, setSelectedWishId] = useState<number | null>(
   defaultWishList[0]?.id ?? null
 );
@@ -89,39 +58,8 @@ const [wishDraft, setWishDraft] = useState<WishListItem>(
 const [wishMessage, setWishMessage] = useState('');
 const [moveToHumidor, setMoveToHumidor] = useState<string>();
 
-  useEffect(() => {
-    const savedCigars = localStorage.getItem('cigars');
-    const savedLogs = localStorage.getItem('smokeLogs');
+    useEffect(() => {
     const savedReflections = localStorage.getItem('smokeReflections');
-    const savedWishList = localStorage.getItem('wishList');
-
-    if (savedCigars) {
-  try {
-    const parsed = JSON.parse(savedCigars) as StoredCigar[];
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      setCigars(parsed);
-      setMoveToHumidor(parsed[0]?.humidor ?? '');
-    }
-  } catch (error) {
-    console.error('Failed to load cigars:', error);
-  }
-}
-
-    if (savedLogs) {
-      try {
-        const parsed = JSON.parse(savedLogs) as SmokeLogEntry[];
-        if (Array.isArray(parsed)) {
-          const sorted = [...parsed].sort(
-            (a, b) =>
-              new Date(b.loggedAt).getTime() - new Date(a.loggedAt).getTime()
-          );
-          setSmokeLogs(sorted);
-          setSelectedLogId(sorted[0]?.id ?? null);
-        }
-      } catch (error) {
-        console.error('Failed to load smoke logs:', error);
-      }
-    }
 
     if (savedReflections) {
       try {
@@ -133,24 +71,27 @@ const [moveToHumidor, setMoveToHumidor] = useState<string>();
         console.error('Failed to load smoke reflections:', error);
       }
     }
-
-    if (savedWishList) {
-      try {
-        const parsed = JSON.parse(savedWishList) as WishListItem[];
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setWishList(parsed);
-          setSelectedWishId(parsed[0].id);
-          setWishDraft(parsed[0]);
-        }
-      } catch (error) {
-        console.error('Failed to load wish list:', error);
-      }
-    }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('wishList', JSON.stringify(wishList));
-  }, [wishList]);
+    setMoveToHumidor(cigars[0]?.humidor ?? '');
+  }, [cigars]);
+
+  useEffect(() => {
+    setSelectedLogId(smokeLogs[0]?.id ?? null);
+  }, [smokeLogs]);
+
+  useEffect(() => {
+    if (wishList.length > 0 && !selectedWishId) {
+      setSelectedWishId(wishList[0].id);
+      setWishDraft(wishList[0]);
+    }
+
+    if (wishList.length === 0) {
+      setSelectedWishId(null);
+      setWishDraft(emptyWishItem);
+    }
+  }, [wishList, selectedWishId]);
 
   const selectedLog = useMemo(() => {
     return smokeLogs.find((entry) => entry.id === selectedLogId) ?? smokeLogs[0] ?? null;
