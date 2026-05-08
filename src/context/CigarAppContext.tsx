@@ -9,11 +9,9 @@ import {
   type ReactNode,
 } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { getUserAppData, saveUserAppData } from '@/lib/supabaseAppData';
 import { supabase } from '@/lib/supabase/client';
 import {
   getSupabaseCigars,
-  migrateAppDataCigarsToTable,
   saveSupabaseCigars,
 } from '@/lib/supabaseCigars';
 import {
@@ -88,11 +86,14 @@ export type QuickLogSelection = {
   cigarId: number | null;
 };
 
-type AppData = {
+type LocalCacheData = {
   humidors: string[];
+  cigars: StoredCigar[];
   smokeLogs: SmokeLogEntry[];
   reflections: ReflectionDrafts;
   wishList: WishListItem[];
+  pairingTypes: PairingType[];
+  pairingLogs: PairingLog[];
   quickLogSelection: QuickLogSelection | null;
 };
 
@@ -143,12 +144,21 @@ function safeParse<T>(value: string | null, fallback: T): T {
   }
 }
 
-function buildAppDataFromLocalStorage(): AppData {
+function buildLocalCacheData(): LocalCacheData {
   return {
     humidors: safeParse<string[]>(localStorage.getItem('humidors'), defaultHumidors),
-        smokeLogs: safeParse<SmokeLogEntry[]>(localStorage.getItem('smokeLogs'), []),
+    cigars: safeParse<StoredCigar[]>(localStorage.getItem('cigars'), fallbackCigars),
+    smokeLogs: safeParse<SmokeLogEntry[]>(localStorage.getItem('smokeLogs'), []),
     reflections: safeParse<ReflectionDrafts>(localStorage.getItem('smokeReflections'), {}),
     wishList: safeParse<WishListItem[]>(localStorage.getItem('wishList'), defaultWishList),
+    pairingTypes: safeParse<PairingType[]>(
+      localStorage.getItem('pairingTypes'),
+      defaultPairingTypes
+    ),
+    pairingLogs: safeParse<PairingLog[]>(
+      localStorage.getItem('pairingLogs'),
+      defaultPairingLogs
+    ),
     quickLogSelection: safeParse<QuickLogSelection | null>(
       localStorage.getItem('quickLogSelection'),
       null
@@ -170,38 +180,35 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
   const [pairingLogs, setPairingLogs] = useState<PairingLog[]>(defaultPairingLogs);
   const [quickLogSelection, setQuickLogSelection] = useState<QuickLogSelection | null>(null);
 
-  function applyAppData(
-  data: AppData,
-  normalizedCigars: StoredCigar[] = fallbackCigars,
-  normalizedPairingTypes: PairingType[] = defaultPairingTypes,
-  normalizedPairingLogs: PairingLog[] = defaultPairingLogs
-) {
-  setIsApplyingCloudData(true);
+  function applyNormalizedData(data: LocalCacheData) {
+    setIsApplyingCloudData(true);
 
-  setHumidors(Array.isArray(data.humidors) ? data.humidors : defaultHumidors);
-  setCigars(Array.isArray(normalizedCigars) ? normalizedCigars : fallbackCigars);
-  setSmokeLogs(Array.isArray(data.smokeLogs) ? data.smokeLogs : []);
-  setReflections(data.reflections && typeof data.reflections === 'object' ? data.reflections : {});
-  setWishList(Array.isArray(data.wishList) ? data.wishList : defaultWishList);
-  setPairingTypes(
-    Array.isArray(normalizedPairingTypes) && normalizedPairingTypes.length > 0
-      ? normalizedPairingTypes
-      : defaultPairingTypes
-  );
-  setPairingLogs(
-    Array.isArray(normalizedPairingLogs)
-      ? normalizedPairingLogs
-      : defaultPairingLogs
-  );
-  setQuickLogSelection(data.quickLogSelection ?? null);
+    setHumidors(Array.isArray(data.humidors) ? data.humidors : defaultHumidors);
+    setCigars(Array.isArray(data.cigars) ? data.cigars : fallbackCigars);
+    setSmokeLogs(Array.isArray(data.smokeLogs) ? data.smokeLogs : []);
+    setReflections(
+      data.reflections && typeof data.reflections === 'object'
+        ? data.reflections
+        : {}
+    );
+    setWishList(Array.isArray(data.wishList) ? data.wishList : defaultWishList);
+    setPairingTypes(
+      Array.isArray(data.pairingTypes) && data.pairingTypes.length > 0
+        ? data.pairingTypes
+        : defaultPairingTypes
+    );
+    setPairingLogs(
+      Array.isArray(data.pairingLogs) ? data.pairingLogs : defaultPairingLogs
+    );
+    setQuickLogSelection(data.quickLogSelection ?? null);
 
-  window.setTimeout(() => {
-    setIsApplyingCloudData(false);
-  }, 0);
-}
+    window.setTimeout(() => {
+      setIsApplyingCloudData(false);
+    }, 0);
+  }
 
   function refreshFromStorage() {
-    applyAppData(buildAppDataFromLocalStorage());
+    applyNormalizedData(buildLocalCacheData());
   }
 
   async function loadSupabaseUserAndData() {
@@ -217,72 +224,38 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const cloudData = await getUserAppData<AppData>();
-      const localData = buildAppDataFromLocalStorage();
+      const localData = buildLocalCacheData();
 
-      if (!cloudData) {
-  await saveUserAppData(localData);
-const tableHumidors = await migrateAppDataHumidorsToTable(localData.humidors);
-const tableReflections = await migrateAppDataReflectionsToTable(localData.reflections);
-  const tableCigars = await getSupabaseCigars();
+      const [
+        tableHumidors,
+        tableCigars,
+        tableSmokeLogs,
+        tableReflections,
+        tableWishList,
+        tablePairingTypes,
+        tablePairingLogs,
+      ] = await Promise.all([
+        migrateAppDataHumidorsToTable(localData.humidors),
+        getSupabaseCigars(),
+        migrateAppDataSmokeLogsToTable(localData.smokeLogs),
+        migrateAppDataReflectionsToTable(localData.reflections),
+        migrateAppDataWishListToTable(localData.wishList),
+        migrateAppDataPairingTypesToTable(localData.pairingTypes),
+        migrateAppDataPairingLogsToTable(localData.pairingLogs),
+      ]);
 
-const tablePairingTypes = await migrateAppDataPairingTypesToTable(
-  safeParse<PairingType[]>(localStorage.getItem('pairingTypes'), defaultPairingTypes)
-);
-
-const tablePairingLogs = await migrateAppDataPairingLogsToTable(
-  safeParse<PairingLog[]>(localStorage.getItem('pairingLogs'), defaultPairingLogs)
-);
-
-const tableWishList = await migrateAppDataWishListToTable(localData.wishList);
-
-applyAppData(
-  {
-    ...localData,
-    humidors: tableHumidors,
-    reflections: tableReflections,
-    wishList: tableWishList,
-  },
-  tableCigars,
-  tablePairingTypes,
-  tablePairingLogs
-);
-
-  setHasLoadedStorage(true);
-  return;
-}
-const tableHumidors = await migrateAppDataHumidorsToTable(cloudData.humidors ?? defaultHumidors);
-const tableReflections = await migrateAppDataReflectionsToTable(cloudData.reflections ?? {});
-      const tableCigars = await getSupabaseCigars();
-
-const tableSmokeLogs = await migrateAppDataSmokeLogsToTable(cloudData.smokeLogs ?? []);
-
-const tablePairingTypes = await migrateAppDataPairingTypesToTable(
-  safeParse<PairingType[]>(localStorage.getItem('pairingTypes'), defaultPairingTypes)
-);
-
-const tablePairingLogs = await migrateAppDataPairingLogsToTable(
-  safeParse<PairingLog[]>(localStorage.getItem('pairingLogs'), defaultPairingLogs)
-);
-
-const tableWishList = await migrateAppDataWishListToTable(
-  cloudData.wishList ?? defaultWishList
-);
-
-applyAppData(
-  {
-    ...cloudData,
-    humidors: tableHumidors,
-    reflections: tableReflections,
-    smokeLogs: tableSmokeLogs,
-    wishList: tableWishList,
-  },
-  tableCigars,
-  tablePairingTypes,
-  tablePairingLogs
-);
+      applyNormalizedData({
+        humidors: tableHumidors,
+        cigars: tableCigars,
+        smokeLogs: tableSmokeLogs,
+        reflections: tableReflections,
+        wishList: tableWishList,
+        pairingTypes: tablePairingTypes,
+        pairingLogs: tablePairingLogs,
+        quickLogSelection: localData.quickLogSelection,
+      });
     } catch (error) {
-      console.error('Failed to load Supabase app data:', error);
+      console.error('Failed to load normalized Supabase data:', error);
     }
 
     setHasLoadedStorage(true);
@@ -327,42 +300,33 @@ applyAppData(
     if (!user) return;
     if (isApplyingCloudData) return;
 
-    const appData: AppData = {
-  humidors,
-  smokeLogs,
-  reflections,
-  wishList,
-  quickLogSelection,
-};
-
-    saveUserAppData(appData).catch((error) => {
-      console.error('Failed to save Supabase app data:', error);
+    saveSupabaseCigars(cigars).catch((error) => {
+      console.error('Failed to save normalized Supabase cigars:', error);
     });
 
-    saveSupabaseCigars(cigars).catch((error) => {
-  console.error('Failed to save normalized Supabase cigars:', error);
-});
+    saveSupabaseSmokeLogs(smokeLogs).catch((error) => {
+      console.error('Failed to save normalized Supabase smoke logs:', error);
+    });
 
-saveSupabaseSmokeLogs(smokeLogs).catch((error) => {
-  console.error('Failed to save normalized Supabase smoke logs:', error);
-});
+    saveSupabasePairingTypes(pairingTypes).catch((error) => {
+      console.error('Failed to save normalized Supabase pairing types:', error);
+    });
 
-saveSupabasePairingTypes(pairingTypes).catch((error) => {
-  console.error('Failed to save normalized Supabase pairing types:', error);
-});
+    saveSupabasePairingLogs(pairingLogs).catch((error) => {
+      console.error('Failed to save normalized Supabase pairing logs:', error);
+    });
 
-saveSupabasePairingLogs(pairingLogs).catch((error) => {
-  console.error('Failed to save normalized Supabase pairing logs:', error);
-});
-saveSupabaseWishList(wishList).catch((error) => {
-  console.error('Failed to save normalized Supabase wish list:', error);
-});
-saveSupabaseHumidors(humidors).catch((error) => {
-  console.error('Failed to save normalized Supabase humidors:', error);
-});
-saveSupabaseReflections(reflections).catch((error) => {
-  console.error('Failed to save normalized Supabase reflections:', error);
-});
+    saveSupabaseWishList(wishList).catch((error) => {
+      console.error('Failed to save normalized Supabase wish list:', error);
+    });
+
+    saveSupabaseHumidors(humidors).catch((error) => {
+      console.error('Failed to save normalized Supabase humidors:', error);
+    });
+
+    saveSupabaseReflections(reflections).catch((error) => {
+      console.error('Failed to save normalized Supabase reflections:', error);
+    });
   }, [
     hasLoadedStorage,
     user,
