@@ -37,16 +37,17 @@ function formatDateTime(value: string) {
 
 export default function SmokesPage() {
   const {
-    cigars,
-    setCigars,
-    smokeLogs,
-    wishList,
-    setWishList,
-  } = useCigarApp();
+  cigars,
+  setCigars,
+  smokeLogs,
+  reflections,
+  setReflections,
+  wishList,
+  setWishList,
+} = useCigarApp();
 
   const [tab, setTab] = useState<'recent' | 'wish'>('recent');
   const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
-  const [reflectionDrafts, setReflectionDrafts] = useState<ReflectionDrafts>({});
   const [savedMessage, setSavedMessage] = useState('');
 const [selectedWishId, setSelectedWishId] = useState<number | null>(
   defaultWishList[0]?.id ?? null
@@ -57,21 +58,6 @@ const [wishDraft, setWishDraft] = useState<WishListItem>(
 );
 const [wishMessage, setWishMessage] = useState('');
 const [moveToHumidor, setMoveToHumidor] = useState<string>();
-
-    useEffect(() => {
-    const savedReflections = localStorage.getItem('smokeReflections');
-
-    if (savedReflections) {
-      try {
-        const parsed = JSON.parse(savedReflections) as ReflectionDrafts;
-        if (parsed && typeof parsed === 'object') {
-          setReflectionDrafts(parsed);
-        }
-      } catch (error) {
-        console.error('Failed to load smoke reflections:', error);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     setMoveToHumidor(cigars[0]?.humidor ?? '');
@@ -102,7 +88,7 @@ const [moveToHumidor, setMoveToHumidor] = useState<string>();
     return cigars.find((cigar) => cigar.id === selectedLog.cigarId) ?? null;
   }, [cigars, selectedLog]);
 
-  const selectedReflection = selectedLog ? reflectionDrafts[selectedLog.id] ?? '' : '';
+  const selectedReflection = selectedLog ? reflections[selectedLog.id] ?? '' : '';
 const selectedWish = useMemo(() => {
   return wishList.find((item) => item.id === selectedWishId) ?? null;
 }, [wishList, selectedWishId]);
@@ -120,16 +106,15 @@ const selectedWish = useMemo(() => {
   }
 }, [selectedWish, wishList]);
 
-  function handleSaveReflection() {
+    function handleSaveReflection() {
     if (!selectedLog) return;
 
     const next = {
-      ...reflectionDrafts,
+      ...reflections,
       [selectedLog.id]: selectedReflection.trim(),
     };
 
-    setReflectionDrafts(next);
-    localStorage.setItem('smokeReflections', JSON.stringify(next));
+    setReflections(next);
     setSavedMessage('Reflection saved');
 
     window.setTimeout(() => {
@@ -495,10 +480,10 @@ setCigars(nextCigars);
                       onChange={(event) => {
                         if (!selectedLog) return;
 
-                        setReflectionDrafts((current) => ({
-                          ...current,
-                          [selectedLog.id]: event.target.value,
-                        }));
+                        setReflections((current) => ({
+  ...current,
+  [selectedLog.id]: event.target.value,
+}));
                       }}
                       rows={4}
                       placeholder="Add a reflection"
