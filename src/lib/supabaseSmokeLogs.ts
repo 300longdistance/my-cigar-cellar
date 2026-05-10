@@ -81,20 +81,47 @@ export async function saveSupabaseSmokeLogs(logs: SmokeLogEntry[]) {
 
   const rows = logs.map((log) => smokeLogToRow(log, user.id));
 
-  const { error } = await supabase
-    .from('smoke_logs')
-    .upsert(rows, {
-      onConflict: 'user_id,legacy_id',
-    });
+  const { error } = await supabase.from('smoke_logs').upsert(rows, {
+    onConflict: 'user_id,legacy_id',
+  });
 
   if (error) {
     throw error;
   }
 }
 
-export async function migrateAppDataSmokeLogsToTable(
-  logs: SmokeLogEntry[]
-) {
+export async function replaceSupabaseSmokeLogs(logs: SmokeLogEntry[]) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return;
+  }
+
+  const deleteResult = await supabase
+    .from('smoke_logs')
+    .delete()
+    .eq('user_id', user.id);
+
+  if (deleteResult.error) {
+    throw deleteResult.error;
+  }
+
+  if (logs.length === 0) {
+    return;
+  }
+
+  const rows = logs.map((log) => smokeLogToRow(log, user.id));
+
+  const insertResult = await supabase.from('smoke_logs').insert(rows);
+
+  if (insertResult.error) {
+    throw insertResult.error;
+  }
+}
+
+export async function migrateAppDataSmokeLogsToTable(logs: SmokeLogEntry[]) {
   const existingLogs = await getSupabaseSmokeLogs();
 
   if (existingLogs.length > 0) {

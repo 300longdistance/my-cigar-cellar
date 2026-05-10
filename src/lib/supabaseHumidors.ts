@@ -85,6 +85,37 @@ export async function saveSupabaseHumidors(humidors: string[]) {
   if (error) throw error;
 }
 
+export async function replaceSupabaseHumidors(humidors: string[]) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const deleteResult = await supabase
+    .from('humidors')
+    .delete()
+    .eq('user_id', user.id);
+
+  if (deleteResult.error) {
+    throw deleteResult.error;
+  }
+
+  const dedupedHumidors = dedupeHumidors(humidors);
+
+  if (dedupedHumidors.length === 0) return;
+
+  const rows = dedupedHumidors.map((humidor, index) =>
+    humidorToRow(humidor, user.id, index)
+  );
+
+  const insertResult = await supabase.from('humidors').insert(rows);
+
+  if (insertResult.error) {
+    throw insertResult.error;
+  }
+}
+
 export async function migrateAppDataHumidorsToTable(humidors: string[]) {
   const existingHumidors = await getSupabaseHumidors();
 
