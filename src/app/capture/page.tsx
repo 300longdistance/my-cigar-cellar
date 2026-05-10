@@ -94,12 +94,11 @@ export default function CapturePage() {
             Select Cigar Photo
 
             <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleImage}
-              className="hidden"
-            />
+  type="file"
+  accept="image/*"
+  onChange={handleImage}
+  className="hidden"
+/>
           </label>
 
           {loading ? (
