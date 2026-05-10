@@ -11,6 +11,7 @@ import { saveSupabasePairingTypes } from '@/lib/supabasePairingTypes';
 import { saveSupabasePairingLogs } from '@/lib/supabasePairingLogs';
 import { saveSupabaseWishList } from '@/lib/supabaseWishList';
 import { saveSupabaseReflections } from '@/lib/supabaseReflections';
+import { resetUserAppData } from '@/lib/supabaseAppData';
 
 export default function SettingsPage() {
   const {
@@ -136,7 +137,7 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleStartFresh() {
+    async function handleStartFresh() {
     if (resetConfirmText !== 'START FRESH') {
       setResetMessage('Type START FRESH to confirm.');
       return;
@@ -165,6 +166,7 @@ export default function SettingsPage() {
       localStorage.removeItem('quickLogSelection');
 
       await Promise.all([
+        resetUserAppData(),
         saveSupabaseHumidors([]),
         saveSupabaseCigars([]),
         saveSupabaseSmokeLogs([]),
@@ -176,6 +178,10 @@ export default function SettingsPage() {
 
       setResetConfirmText('');
       setResetMessage('Your cellar has been cleared. You can start fresh.');
+
+      window.setTimeout(() => {
+        window.location.href = '/';
+      }, 600);
     } catch (error) {
       console.error('Failed to reset app data:', error);
       setResetMessage('Failed to clear app data. Try again.');
