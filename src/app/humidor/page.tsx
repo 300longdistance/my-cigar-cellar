@@ -5,6 +5,7 @@ import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useCigarApp } from '@/context/CigarAppContext';
 import { saveUserAppData } from '@/lib/supabaseAppData';
 import { uploadCigarImage } from '@/lib/supabaseImages';
+import { supabase } from '@/lib/supabase/client';
 
 type Cigar = {
   id: number;
@@ -32,6 +33,17 @@ type FormState = {
   size: string;
   notes: string;
   image?: string;
+};
+
+type AiCaptureResult = {
+  brand?: string;
+  name?: string;
+  size?: string;
+  wrapper?: string;
+  origin?: string;
+  strength?: string;
+  notes?: string;
+  confidence?: number;
 };
 
 type SmokeLogEntry = {
@@ -181,6 +193,8 @@ const [editOriginActiveIndex, setEditOriginActiveIndex] = useState(0);
 
 const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
 const [isCigarDetailOpen, setIsCigarDetailOpen] = useState(false);
+const [isAiCapturing, setIsAiCapturing] = useState(false);
+const [aiCaptureMessage, setAiCaptureMessage] = useState('');
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isManageHumidorsOpen, setIsManageHumidorsOpen] = useState(false);
@@ -202,8 +216,9 @@ const [isCigarDetailOpen, setIsCigarDetailOpen] = useState(false);
   const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  const imageInputRef = useRef<HTMLInputElement | null>(null);
+    const imageInputRef = useRef<HTMLInputElement | null>(null);
   const newImageInputRef = useRef<HTMLInputElement | null>(null);
+  const aiCaptureInputRef = useRef<HTMLInputElement | null>(null);
 
   const newCigarNameRef = useRef<HTMLInputElement | null>(null);
 const newCigarBrandRef = useRef<HTMLInputElement | null>(null);
@@ -1110,6 +1125,80 @@ function confirmRemoveSelectedCigar() {
     newImageInputRef.current?.click();
   }
 
+    function triggerAiCapturePicker() {
+    aiCaptureInputRef.current?.click();
+  }
+
+  function applyAiCaptureResult(result: AiCaptureResult, imageUrl: string) {
+    setDraftForm((current) => ({
+      ...current,
+      name: result.name?.trim() || current.name,
+      brand: result.brand?.trim() || current.brand,
+      size: result.size?.trim() || current.size,
+      wrapper: result.wrapper?.trim() || current.wrapper,
+      origin: result.origin?.trim() || current.origin,
+      strength: result.strength?.trim() || current.strength,
+      notes: result.notes?.trim() || current.notes,
+      image: imageUrl,
+    }));
+
+    if (typeof result.confidence === 'number') {
+      setAiCaptureMessage(`AI filled the form. Confidence: ${Math.round(result.confidence * 100)}%. Review before saving.`);
+      return;
+    }
+
+    setAiCaptureMessage('AI filled the form. Review before saving.');
+  }
+
+  async function handleAiCaptureImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    setIsAiCapturing(true);
+    setAiCaptureMessage('');
+
+    try {
+      const imageForAi = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          resolve(reader.result as string);
+        };
+
+        reader.onerror = () => {
+          reject(new Error('Failed to read image.'));
+        };
+
+        reader.readAsDataURL(file);
+      });
+
+      const temporaryImageId = `ai-new-${Date.now()}`;
+      const imageUrl = await uploadCigarImage(file, temporaryImageId);
+
+      const { data, error } = await supabase.functions.invoke('cigar-capture', {
+        body: {
+          image: imageForAi,
+        },
+      });
+
+      if (error) {
+        console.error(error);
+        setDraftForm((current) => ({ ...current, image: imageUrl }));
+        setAiCaptureMessage('Photo saved, but AI could not read the cigar. Enter details manually.');
+        return;
+      }
+
+      applyAiCaptureResult((data ?? {}) as AiCaptureResult, imageUrl);
+    } catch (error) {
+      console.error('AI cigar capture failed:', error);
+      setAiCaptureMessage('AI capture failed. You can still enter the cigar manually.');
+    } finally {
+      setIsAiCapturing(false);
+      event.target.value = '';
+    }
+  }
+
   function updateSelectedCigarImage(image: string | undefined) {
     if (!selectedCigar || isCreatingNew) return;
 
@@ -1743,7 +1832,7 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
             in {draftForm.humidor || selectedHumidor}
           </div>
 
-          <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
+                    <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
             <input
               ref={newImageInputRef}
               type="file"
@@ -1752,6 +1841,41 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
               onChange={handleNewImageChange}
               className="hidden"
             />
+
+            <input
+              ref={aiCaptureInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleAiCaptureImageChange}
+              className="hidden"
+            />
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={triggerAiCapturePicker}
+                disabled={isAiCapturing || isUploadingImage}
+                className="rounded-full bg-[#c8882d] px-3 py-2 text-[12px] text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isAiCapturing ? 'Scanning...' : 'AI Scan'}
+              </button>
+
+              <button
+                type="button"
+                onClick={triggerNewImagePicker}
+                disabled={isAiCapturing || isUploadingImage}
+                className="rounded-full border border-[#3a2a0f] bg-[#121316] px-3 py-2 text-[12px] text-white/75 transition hover:bg-[#17191d] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Photo Only
+              </button>
+            </div>
+
+            {aiCaptureMessage && (
+              <div className="mt-2 rounded-[12px] border border-[#3a2a0f] bg-[#111215] px-3 py-2 text-[11px] leading-relaxed text-white/60">
+                {aiCaptureMessage}
+              </div>
+            )}
           </div>
         </div>
       </div>
