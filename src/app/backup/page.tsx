@@ -6,6 +6,7 @@ import { useCigarApp } from '@/context/CigarAppContext';
 export default function BackupPage() {
   const {
     hasLoadedStorage,
+    user,
     humidors,
     cigars,
     smokeLogs,
@@ -16,11 +17,12 @@ export default function BackupPage() {
     quickLogSelection,
   } = useCigarApp();
 
-  function downloadBackup() {
-    const backupData = {
-      exportedAt: new Date().toISOString(),
+  function downloadJsonBackup() {
+    const backup = {
       app: 'My Cigar Cellar',
-      version: 1,
+      backupVersion: 2,
+      exportedAt: new Date().toISOString(),
+      userEmail: user?.email ?? null,
       data: {
         humidors,
         cigars,
@@ -33,11 +35,11 @@ export default function BackupPage() {
       },
     };
 
-    const file = new Blob([JSON.stringify(backupData, null, 2)], {
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {
       type: 'application/json',
     });
 
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
 
     link.href = url;
@@ -63,19 +65,25 @@ export default function BackupPage() {
         </Link>
 
         <section className="mt-8 rounded-2xl border border-[#3a2a0f] bg-[#111111] p-6 shadow-2xl">
-          <h1 className="font-cinzel text-3xl text-[#d58a24]">
-            Backup My Cigar Cellar
+          <div className="text-[10px] uppercase tracking-[0.16em] text-[#c8821f]">
+            Backup
+          </div>
+
+          <h1 className="mt-2 font-cinzel text-3xl text-[#d58a24]">
+            My Cigar Cellar Backup
           </h1>
 
           <p className="mt-4 text-sm leading-6 text-white/70">
-            Download a local JSON backup of your current humidors, cigars,
-            smoke logs, wish list, pairings, and notes.
+            Download a JSON backup of your current humidors, cigars, smoke logs,
+            reflections, wish list, pairings, and local selection state.
           </p>
 
           <div className="mt-6 grid gap-3 rounded-xl border border-white/10 bg-black/40 p-4 text-sm text-white/70">
+            <div>Signed in: {user?.email ?? 'Not signed in'}</div>
             <div>Humidors: {humidors.length}</div>
             <div>Cigars: {cigars.length}</div>
             <div>Smoke Logs: {smokeLogs.length}</div>
+            <div>Reflections: {Object.keys(reflections).length}</div>
             <div>Wish List Items: {wishList.length}</div>
             <div>Pairing Types: {pairingTypes.length}</div>
             <div>Pairing Logs: {pairingLogs.length}</div>
@@ -83,11 +91,11 @@ export default function BackupPage() {
 
           <button
             type="button"
-            onClick={downloadBackup}
+            onClick={downloadJsonBackup}
             disabled={!hasLoadedStorage}
-            className="mt-6 rounded-xl bg-[#d58a24] px-5 py-3 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-6 rounded-xl bg-[#d58a24] px-5 py-3 font-semibold text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Download Backup
+            Download JSON Backup
           </button>
         </section>
       </div>
