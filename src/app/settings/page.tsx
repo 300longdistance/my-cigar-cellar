@@ -34,8 +34,11 @@ export default function SettingsPage() {
     setQuickLogSelection,
   } = useCigarApp();
 
-  const [importMessage, setImportMessage] = useState('');
+    const [importMessage, setImportMessage] = useState('');
   const [isImporting, setIsImporting] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   function downloadJsonBackup() {
     const backup = {
@@ -74,7 +77,7 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url);
   }
 
-  async function handleImportBackup(event: ChangeEvent<HTMLInputElement>) {
+      async function handleImportBackup(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -103,7 +106,6 @@ export default function SettingsPage() {
       const nextPairingLogs = Array.isArray(data.pairingLogs)
         ? data.pairingLogs
         : [];
-      const nextQuickLogSelection = data.quickLogSelection ?? null;
 
       setHumidors(nextHumidors);
       setCigars(nextCigars);
@@ -112,24 +114,7 @@ export default function SettingsPage() {
       setWishList(nextWishList);
       setPairingTypes(nextPairingTypes);
       setPairingLogs(nextPairingLogs);
-      setQuickLogSelection(nextQuickLogSelection);
-
-      localStorage.setItem('humidors', JSON.stringify(nextHumidors));
-      localStorage.setItem('cigars', JSON.stringify(nextCigars));
-      localStorage.setItem('smokeLogs', JSON.stringify(nextSmokeLogs));
-      localStorage.setItem('smokeReflections', JSON.stringify(nextReflections));
-      localStorage.setItem('wishList', JSON.stringify(nextWishList));
-      localStorage.setItem('pairingTypes', JSON.stringify(nextPairingTypes));
-      localStorage.setItem('pairingLogs', JSON.stringify(nextPairingLogs));
-
-      if (nextQuickLogSelection) {
-        localStorage.setItem(
-          'quickLogSelection',
-          JSON.stringify(nextQuickLogSelection)
-        );
-      } else {
-        localStorage.removeItem('quickLogSelection');
-      }
+      setQuickLogSelection(data.quickLogSelection ?? null);
 
       await Promise.all([
         saveSupabaseHumidors(nextHumidors),
@@ -141,13 +126,61 @@ export default function SettingsPage() {
         saveSupabasePairingLogs(nextPairingLogs),
       ]);
 
-      setImportMessage('Backup imported successfully.');
+      setImportMessage('Backup restored successfully.');
     } catch (error) {
-      console.error('Failed to import backup:', error);
-      setImportMessage('Failed to import backup file.');
+      console.error(error);
+      setImportMessage('Failed to restore backup.');
     } finally {
       setIsImporting(false);
       event.target.value = '';
+    }
+  }
+
+  async function handleStartFresh() {
+    if (resetConfirmText !== 'START FRESH') {
+      setResetMessage('Type START FRESH to confirm.');
+      return;
+    }
+
+    setIsResetting(true);
+    setResetMessage('Clearing app data...');
+
+    try {
+      setHumidors([]);
+      setCigars([]);
+      setSmokeLogs([]);
+      setReflections({});
+      setWishList([]);
+      setPairingTypes([]);
+      setPairingLogs([]);
+      setQuickLogSelection(null);
+
+      localStorage.removeItem('humidors');
+      localStorage.removeItem('cigars');
+      localStorage.removeItem('smokeLogs');
+      localStorage.removeItem('smokeReflections');
+      localStorage.removeItem('wishList');
+      localStorage.removeItem('pairingTypes');
+      localStorage.removeItem('pairingLogs');
+      localStorage.removeItem('quickLogSelection');
+
+      await Promise.all([
+        saveSupabaseHumidors([]),
+        saveSupabaseCigars([]),
+        saveSupabaseSmokeLogs([]),
+        saveSupabaseReflections({}),
+        saveSupabaseWishList([]),
+        saveSupabasePairingTypes([]),
+        saveSupabasePairingLogs([]),
+      ]);
+
+      setResetConfirmText('');
+      setResetMessage('Your cellar has been cleared. You can start fresh.');
+    } catch (error) {
+      console.error('Failed to reset app data:', error);
+      setResetMessage('Failed to clear app data. Try again.');
+    } finally {
+      setIsResetting(false);
     }
   }
 
@@ -216,7 +249,7 @@ export default function SettingsPage() {
             ) : null}
           </div>
 
-          <div className="mt-6 rounded-2xl border border-[#3a2a0f] bg-black/40 p-4">
+                    <div className="mt-6 rounded-2xl border border-[#3a2a0f] bg-black/40 p-4">
             <div className="text-[10px] uppercase tracking-[0.16em] text-[#c8821f]">
               Data Status
             </div>
@@ -231,6 +264,49 @@ export default function SettingsPage() {
               <div>Pairing Types: {pairingTypes.length}</div>
               <div>Pairing Logs: {pairingLogs.length}</div>
             </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-red-500/30 bg-red-950/10 p-4">
+            <div className="text-[10px] uppercase tracking-[0.16em] text-red-300">
+              Danger Zone
+            </div>
+
+            <h2 className="mt-2 text-xl font-semibold text-white">
+              Start Fresh
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-white/65">
+              This clears your humidors, cigars, smoke logs, reflections, wish list,
+              and pairing data. Your login remains active. Download a backup before
+              using this.
+            </p>
+
+            <div className="mt-4 rounded-xl border border-red-500/20 bg-black/40 px-4 py-3 text-sm text-red-200/80">
+              To confirm, type <span className="font-semibold text-red-200">START FRESH</span>.
+            </div>
+
+            <input
+              type="text"
+              value={resetConfirmText}
+              onChange={(event) => setResetConfirmText(event.target.value)}
+              placeholder="START FRESH"
+              className="mt-4 w-full rounded-xl border border-red-500/30 bg-black px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-red-400"
+            />
+
+            <button
+              type="button"
+              onClick={handleStartFresh}
+              disabled={isResetting || resetConfirmText !== 'START FRESH'}
+              className="mt-4 w-full rounded-xl bg-red-500 px-5 py-3 font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isResetting ? 'Clearing...' : 'Start Fresh'}
+            </button>
+
+            {resetMessage ? (
+              <div className="mt-4 rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white/70">
+                {resetMessage}
+              </div>
+            ) : null}
           </div>
         </section>
       </div>
