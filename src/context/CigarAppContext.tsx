@@ -146,19 +146,13 @@ function safeParse<T>(value: string | null, fallback: T): T {
 
 function buildLocalCacheData(): LocalCacheData {
   return {
-    humidors: safeParse<string[]>(localStorage.getItem('humidors'), defaultHumidors),
-    cigars: safeParse<StoredCigar[]>(localStorage.getItem('cigars'), fallbackCigars),
+    humidors: safeParse<string[]>(localStorage.getItem('humidors'), []),
+    cigars: safeParse<StoredCigar[]>(localStorage.getItem('cigars'), []),
     smokeLogs: safeParse<SmokeLogEntry[]>(localStorage.getItem('smokeLogs'), []),
     reflections: safeParse<ReflectionDrafts>(localStorage.getItem('smokeReflections'), {}),
-    wishList: safeParse<WishListItem[]>(localStorage.getItem('wishList'), defaultWishList),
-    pairingTypes: safeParse<PairingType[]>(
-      localStorage.getItem('pairingTypes'),
-      defaultPairingTypes
-    ),
-    pairingLogs: safeParse<PairingLog[]>(
-      localStorage.getItem('pairingLogs'),
-      defaultPairingLogs
-    ),
+    wishList: safeParse<WishListItem[]>(localStorage.getItem('wishList'), []),
+    pairingTypes: safeParse<PairingType[]>(localStorage.getItem('pairingTypes'), []),
+    pairingLogs: safeParse<PairingLog[]>(localStorage.getItem('pairingLogs'), []),
     quickLogSelection: safeParse<QuickLogSelection | null>(
       localStorage.getItem('quickLogSelection'),
       null
@@ -180,26 +174,20 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
   const [pairingLogs, setPairingLogs] = useState<PairingLog[]>(defaultPairingLogs);
   const [quickLogSelection, setQuickLogSelection] = useState<QuickLogSelection | null>(null);
 
-  function applyNormalizedData(data: LocalCacheData) {
+    function applyNormalizedData(data: LocalCacheData) {
     setIsApplyingCloudData(true);
 
-    setHumidors(Array.isArray(data.humidors) ? data.humidors : defaultHumidors);
-    setCigars(Array.isArray(data.cigars) ? data.cigars : fallbackCigars);
+    setHumidors(Array.isArray(data.humidors) ? data.humidors : []);
+    setCigars(Array.isArray(data.cigars) ? data.cigars : []);
     setSmokeLogs(Array.isArray(data.smokeLogs) ? data.smokeLogs : []);
     setReflections(
       data.reflections && typeof data.reflections === 'object'
         ? data.reflections
         : {}
     );
-    setWishList(Array.isArray(data.wishList) ? data.wishList : defaultWishList);
-    setPairingTypes(
-      Array.isArray(data.pairingTypes) && data.pairingTypes.length > 0
-        ? data.pairingTypes
-        : defaultPairingTypes
-    );
-    setPairingLogs(
-      Array.isArray(data.pairingLogs) ? data.pairingLogs : defaultPairingLogs
-    );
+    setWishList(Array.isArray(data.wishList) ? data.wishList : []);
+    setPairingTypes(Array.isArray(data.pairingTypes) ? data.pairingTypes : []);
+    setPairingLogs(Array.isArray(data.pairingLogs) ? data.pairingLogs : []);
     setQuickLogSelection(data.quickLogSelection ?? null);
 
     window.setTimeout(() => {
@@ -211,7 +199,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     applyNormalizedData(buildLocalCacheData());
   }
 
-  async function loadSupabaseUserAndData() {
+    async function loadSupabaseUserAndData() {
     const {
       data: { user: nextUser },
     } = await supabase.auth.getUser();
@@ -219,6 +207,23 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     setUser(nextUser);
 
     if (!nextUser) {
+      setHasLoadedStorage(true);
+      return;
+    }
+
+    if (localStorage.getItem('myCigarCellarStartFresh') === 'true') {
+      applyNormalizedData({
+        humidors: [],
+        cigars: [],
+        smokeLogs: [],
+        reflections: {},
+        wishList: [],
+        pairingTypes: [],
+        pairingLogs: [],
+        quickLogSelection: null,
+      });
+
+      localStorage.removeItem('myCigarCellarStartFresh');
       setHasLoadedStorage(true);
       return;
     }

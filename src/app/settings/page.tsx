@@ -146,7 +146,9 @@ export default function SettingsPage() {
     setIsResetting(true);
     setResetMessage('Clearing app data...');
 
-    try {
+        try {
+      localStorage.setItem('myCigarCellarStartFresh', 'true');
+
       setHumidors([]);
       setCigars([]);
       setSmokeLogs([]);
