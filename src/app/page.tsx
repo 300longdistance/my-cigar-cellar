@@ -89,13 +89,13 @@ export default function HomePage() {
     Settings
   </Link>
 </div>
-              <div className="relative aspect-4/5 w-full bg-black">
+              <div className="relative h-[82vh] max-h-[980px] w-full bg-black">
                 <Image
                   src="/images/main-home-v2.png"
                   alt="My Cigar Cellar main scene"
                   fill
                   sizes="100vw"
-                  className="object-cover object-[center_35%] sm:object-contain"
+                  className="object-contain object-center"
                   priority
                 />
 
@@ -203,7 +203,7 @@ export default function HomePage() {
             </p>
           </aside>
 
-          <section className="w-[76vw] max-w-[1120px]">
+          <section className="h-[82vh] max-h-[980px] aspect-square">
   <div className="absolute right-4 top-4 z-30">
   <Link
     href="/settings"
