@@ -188,8 +188,8 @@ export default function HomePage() {
         </div>
 
         {/* Landscape layout: iPad landscape / desktop */}
-        <div className="hidden w-full flex-1 items-center justify-center gap-6 landscape:flex">
-          <aside className="w-[190px] shrink-0 pl-1 text-left">
+        <div className="hidden w-full flex-1 items-center justify-center gap-4 px-2 landscape:flex xl:gap-6">
+          <aside className="w-[170px] shrink-0 pl-1 text-left xl:w-[190px]">
             <p className="text-[16px] font-semibold text-stone-400">
               Current Humidor
             </p>
@@ -203,7 +203,7 @@ export default function HomePage() {
             </p>
           </aside>
 
-          <section className="w-[66vw] max-w-[930px]">
+          <section className="w-[76vw] max-w-[1120px]">
   <div className="absolute right-4 top-4 z-30">
   <Link
     href="/settings"
@@ -237,7 +237,7 @@ export default function HomePage() {
                 src="/images/main-home-v2.png"
                 alt="My Cigar Cellar main scene"
                 fill
-                sizes="66vw"
+                sizes="76vw"
                 className="object-contain"
                 priority
               />
@@ -292,7 +292,7 @@ export default function HomePage() {
             </div>
           </section>
 
-          <aside className="w-[190px] shrink-0 pr-1 text-right">
+          <aside className="w-[170px] shrink-0 pr-1 text-right xl:w-[190px]">
             <p className="text-[16px] font-semibold text-stone-400">
               Recently Smoked
             </p>
