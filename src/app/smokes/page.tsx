@@ -58,6 +58,7 @@ const [wishDraft, setWishDraft] = useState<WishListItem>(
 );
 const [wishMessage, setWishMessage] = useState('');
 const [moveToHumidor, setMoveToHumidor] = useState<string>();
+const [isNotebookDetailOpen, setIsNotebookDetailOpen] = useState(false);
 
   useEffect(() => {
     setMoveToHumidor(cigars[0]?.humidor ?? '');
@@ -258,7 +259,10 @@ setCigars(nextCigars);
               <div className="grid grid-cols-2 rounded-full bg-[#16181c] p-[3px]">
                 <button
                   type="button"
-                  onClick={() => setTab('recent')}
+                                    onClick={() => {
+                    setTab('recent');
+                    setIsNotebookDetailOpen(false);
+                  }}
                   className={`rounded-full px-4 py-1.5 text-[13px] transition ${
                     tab === 'recent'
                       ? 'bg-[#22252b] text-[#d58a24]'
@@ -270,7 +274,10 @@ setCigars(nextCigars);
 
                 <button
                   type="button"
-                  onClick={() => setTab('wish')}
+                                    onClick={() => {
+                    setTab('wish');
+                    setIsNotebookDetailOpen(false);
+                  }}
                   className={`rounded-full px-4 py-1.5 text-[13px] transition ${
                     tab === 'wish'
                       ? 'bg-[#22252b] text-[#d58a24]'
@@ -300,7 +307,10 @@ setCigars(nextCigars);
                           <button
                             key={entry.id}
                             type="button"
-                            onClick={() => setSelectedLogId(entry.id)}
+                                                        onClick={() => {
+                              setSelectedLogId(entry.id);
+                              setIsNotebookDetailOpen(true);
+                            }}
                             className={`block w-full rounded-[16px] px-3.5 py-3 text-left transition ${
                               isSelected
                                 ? 'bg-[#1b1d22] ring-1 ring-[#c8882d]'
@@ -343,7 +353,10 @@ setCigars(nextCigars);
 
                     <button
                       type="button"
-                      onClick={handleAddWishItem}
+                                            onClick={() => {
+                        handleAddWishItem();
+                        setIsNotebookDetailOpen(true);
+                      }}
                       className="text-[12px] text-[#d58a24] transition hover:text-[#f0d78a]"
                     >
                       + Add
@@ -363,7 +376,10 @@ setCigars(nextCigars);
                           <button
                             key={item.id}
                             type="button"
-                            onClick={() => setSelectedWishId(item.id)}
+                                                        onClick={() => {
+                              setSelectedWishId(item.id);
+                              setIsNotebookDetailOpen(true);
+                            }}
                             className={`block w-full rounded-[16px] px-3.5 py-3 text-left transition ${
                               isSelected
                                 ? 'bg-[#1b1d22] ring-1 ring-[#c8882d]'
@@ -401,14 +417,33 @@ setCigars(nextCigars);
             </div>
           </aside>
 
-          <section className="rounded-[24px] bg-[#050505] px-3 py-3 sm:px-4 sm:py-4">
-            <div className="mb-3 grid grid-cols-[32px_1fr_72px] items-center">
+                    <section
+            className={`rounded-[24px] bg-[#050505] px-3 py-3 sm:block sm:px-4 sm:py-4 ${
+              isNotebookDetailOpen
+                ? 'fixed inset-x-3 bottom-3 top-3 z-50 overflow-y-auto border border-[#3a2a0f] shadow-[0_24px_80px_rgba(0,0,0,0.72)] sm:static sm:inset-auto sm:z-auto sm:overflow-visible sm:border-0 sm:shadow-none'
+                : 'hidden'
+            }`}
+          >
+                        <div className="mb-3 grid grid-cols-[32px_1fr_72px] items-center">
               <div />
-              <h1 className="text-center text-[16px]">Smoke Details</h1>
+
+              <h1 className="text-center text-[16px]">
+                {tab === 'recent' ? 'Smoke Details' : 'Wish Item'}
+              </h1>
+
               <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsNotebookDetailOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#15161a] text-[18px] text-white/80 transition hover:bg-[#1d2026] hover:text-white sm:hidden"
+                  aria-label="Close notebook detail"
+                >
+                  ×
+                </button>
+
                 <Link
                   href="/"
-                  className="rounded-full bg-[#16181c] px-5 py-2 text-[14px] text-[#d58a24] transition hover:bg-[#1d2026]"
+                  className="hidden rounded-full bg-[#16181c] px-5 py-2 text-[14px] text-[#d58a24] transition hover:bg-[#1d2026] sm:inline-flex"
                 >
                   Done
                 </Link>
