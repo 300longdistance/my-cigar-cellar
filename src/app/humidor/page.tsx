@@ -822,29 +822,25 @@ useEffect(() => {
       cigars: nextCigars,
     });
 
-    setHumidors(nextHumidors);
+        setHumidors(nextHumidors);
     setCigars(nextCigars);
     setSelectedHumidor(nextHumidor);
     setSelectedId(newCigar.id);
-    setIsCreatingNew(true);
+    setIsCreatingNew(false);
     setSearchTerm('');
 
     setDraftForm({
-      name: '',
-      brand: trimmedBrand || '',
-      humidor: nextHumidor,
-      qty: Math.max(1, draftForm.qty || 1),
-      origin: draftForm.origin.trim(),
-      wrapper: draftForm.wrapper.trim(),
-      strength: draftForm.strength.trim(),
-      size: '',
-      notes: '',
-      image: undefined,
+      name: newCigar.name,
+      brand: newCigar.brand,
+      humidor: newCigar.humidor,
+      qty: newCigar.qty,
+      origin: newCigar.origin,
+      wrapper: newCigar.wrapper,
+      strength: newCigar.strength,
+      size: newCigar.size,
+      notes: newCigar.notes,
+      image: newCigar.image,
     });
-
-    window.setTimeout(() => {
-      newCigarNameRef.current?.focus();
-    }, 0);
   } catch (error) {
     console.error('Failed to save cigar to Firestore:', error);
   }
@@ -1669,11 +1665,32 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
             </div>
           </aside>
 
-          <section className="rounded-[24px] bg-[#050505] px-3 py-3 sm:px-4 sm:py-4">
-            <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center">
+                    <section
+            className={`rounded-[24px] bg-[#050505] px-3 py-3 sm:px-4 sm:py-4 ${
+              isCreatingNew
+                ? 'fixed inset-x-3 bottom-3 top-3 z-50 overflow-y-auto border border-[#3a2a0f] shadow-[0_24px_80px_rgba(0,0,0,0.72)] sm:static sm:inset-auto sm:z-auto sm:overflow-visible sm:border-0 sm:shadow-none'
+                : ''
+            }`}
+          >
+                        <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center">
               <div />
-              <h1 className="text-center text-[16px]">Cigar</h1>
-              <div />
+
+              <h1 className="text-center text-[16px]">
+                {isCreatingNew ? 'New Cigar' : 'Cigar'}
+              </h1>
+
+              {isCreatingNew ? (
+                <button
+                  type="button"
+                  onClick={cancelCreatingNewCigar}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#15161a] text-[18px] text-white/80 transition hover:bg-[#1d2026] hover:text-white sm:hidden"
+                  aria-label="Close new cigar"
+                >
+                  ×
+                </button>
+              ) : (
+                <div />
+              )}
             </div>
 
             {isCreatingNew ? (
