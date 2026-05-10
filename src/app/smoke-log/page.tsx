@@ -160,6 +160,7 @@ const [rating, setRating] = useState<number>(0);
 const [notes, setNotes] = useState('');
 const [pairing, setPairing] = useState('');
 const [saveError, setSaveError] = useState('');
+const [isQuickLogOpen, setIsQuickLogOpen] = useState(false);
 
   useEffect(() => {
     if (!Array.isArray(cigars) || cigars.length === 0) return;
@@ -321,8 +322,14 @@ const filteredPairingOptions = useMemo(() => {
     }
   }, [cigarsInHumidor, selectedCigar, selectedHumidor, selectedCigarId]);
 
-  function handleHumidorChange(nextHumidor: string) {
+    function handleHumidorChange(nextHumidor: string) {
     setSelectedHumidor(nextHumidor);
+    setIsQuickLogOpen(false);
+    setRating(0);
+    setNotes('');
+    setPairing('');
+    setSaveError('');
+
     const nextCigar = cigars.find((cigar) => cigar.humidor === nextHumidor);
     if (nextCigar) {
       setSelectedCigarId(nextCigar.id);
@@ -545,7 +552,11 @@ function formatShortLogDate(value?: string) {
       <button
         key={cigar.id}
         type="button"
-        onClick={() => setSelectedCigarId(cigar.id)}
+                onClick={() => {
+          setSelectedCigarId(cigar.id);
+          setIsQuickLogOpen(true);
+          setSaveError('');
+        }}
         className={`group block w-full rounded-[18px] px-3 py-3 text-left transition duration-150 ${
           isSelected
             ? 'bg-[#1b1d22] ring-1 ring-[#c8882d]/45 shadow-[0_0_0_1px_rgba(200,136,45,0.25)]'
@@ -614,11 +625,29 @@ function formatShortLogDate(value?: string) {
             </div>
           </aside>
 
-          <section className="rounded-[24px] bg-[#050505] px-3 py-3 sm:px-4 sm:py-4">
-            <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center">
+                    <section
+            className={`rounded-[24px] bg-[#050505] px-3 py-3 sm:block sm:px-4 sm:py-4 ${
+              isQuickLogOpen
+                ? 'fixed inset-x-3 bottom-3 top-3 z-50 overflow-y-auto border border-[#3a2a0f] shadow-[0_24px_80px_rgba(0,0,0,0.72)] sm:static sm:inset-auto sm:z-auto sm:overflow-visible sm:border-0 sm:shadow-none'
+                : 'hidden'
+            }`}
+          >
+                        <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center">
               <div />
+
               <h1 className="text-center text-[16px]">Quick Log</h1>
-              <div />
+
+              <button
+                type="button"
+                onClick={() => {
+                  handleCancel();
+                  setIsQuickLogOpen(false);
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#15161a] text-[18px] text-white/80 transition hover:bg-[#1d2026] hover:text-white sm:hidden"
+                aria-label="Close quick log"
+              >
+                ×
+              </button>
             </div>
 
             {selectedCigar ? (
