@@ -180,6 +180,7 @@ const [editSizeActiveIndex, setEditSizeActiveIndex] = useState(0);
 const [editOriginActiveIndex, setEditOriginActiveIndex] = useState(0);
 
 const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+const [isCigarDetailOpen, setIsCigarDetailOpen] = useState(false);
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isManageHumidorsOpen, setIsManageHumidorsOpen] = useState(false);
@@ -743,7 +744,7 @@ useEffect(() => {
     );
   }
 
-  function handleCardKeyDown(
+    function handleCardKeyDown(
     event: React.KeyboardEvent<HTMLDivElement>,
     cigarId: number
   ) {
@@ -751,11 +752,13 @@ useEffect(() => {
       event.preventDefault();
       setIsCreatingNew(false);
       setSelectedId(cigarId);
+      setIsCigarDetailOpen(true);
     }
   }
 
-  function startCreatingNewCigar() {
+    function startCreatingNewCigar() {
   setIsCreatingNew(true);
+  setIsCigarDetailOpen(false);
   setSelectedId(null);
   setDraftForm(emptyForm(selectedHumidor));
   setIsDeleteConfirmOpen(false);
@@ -825,8 +828,9 @@ useEffect(() => {
         setHumidors(nextHumidors);
     setCigars(nextCigars);
     setSelectedHumidor(nextHumidor);
-    setSelectedId(newCigar.id);
+        setSelectedId(newCigar.id);
     setIsCreatingNew(false);
+    setIsCigarDetailOpen(false);
     setSearchTerm('');
 
     setDraftForm({
@@ -1591,9 +1595,10 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
   key={cigar.id}
   role="button"
   tabIndex={0}
-  onClick={() => {
+    onClick={() => {
     setIsCreatingNew(false);
     setSelectedId(cigar.id);
+    setIsCigarDetailOpen(true);
   }}
   onKeyDown={(event) => handleCardKeyDown(event, cigar.id)}
   className={`group block w-full cursor-pointer rounded-[20px] border px-3.5 py-3.5 text-left transition duration-150 ${
@@ -1665,26 +1670,34 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
             </div>
           </aside>
 
-                    <section
-            className={`rounded-[24px] bg-[#050505] px-3 py-3 sm:px-4 sm:py-4 ${
-              isCreatingNew
+                              <section
+            className={`rounded-[24px] bg-[#050505] px-3 py-3 sm:block sm:px-4 sm:py-4 ${
+              isCreatingNew || isCigarDetailOpen
                 ? 'fixed inset-x-3 bottom-3 top-3 z-50 overflow-y-auto border border-[#3a2a0f] shadow-[0_24px_80px_rgba(0,0,0,0.72)] sm:static sm:inset-auto sm:z-auto sm:overflow-visible sm:border-0 sm:shadow-none'
-                : ''
+                : 'hidden'
             }`}
           >
-                        <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center">
+                                    <div className="mb-3 grid grid-cols-[32px_1fr_32px] items-center">
               <div />
 
               <h1 className="text-center text-[16px]">
                 {isCreatingNew ? 'New Cigar' : 'Cigar'}
               </h1>
 
-              {isCreatingNew ? (
+              {isCreatingNew || isCigarDetailOpen ? (
                 <button
                   type="button"
-                  onClick={cancelCreatingNewCigar}
+                  onClick={() => {
+                    if (isCreatingNew) {
+                      cancelCreatingNewCigar();
+                      return;
+                    }
+
+                    saveDraftToSelectedCigar();
+                    setIsCigarDetailOpen(false);
+                  }}
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[#15161a] text-[18px] text-white/80 transition hover:bg-[#1d2026] hover:text-white sm:hidden"
-                  aria-label="Close new cigar"
+                  aria-label="Close cigar panel"
                 >
                   ×
                 </button>
