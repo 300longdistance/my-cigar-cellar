@@ -44,9 +44,16 @@ export async function saveUserAppData<T extends object>(appData: T) {
     throw error;
   }
 }
+
 export async function resetUserAppData() {
   await saveUserAppData({
     humidors: [],
     cigars: [],
+    smokeLogs: [],
+    reflections: {},
+    wishList: [],
+    pairingTypes: [],
+    pairingLogs: [],
+    quickLogSelection: null,
   });
 }
