@@ -4,9 +4,15 @@ import Link from 'next/link';
 import { ChangeEvent, useState } from 'react';
 import AuthButton from '@/components/AuthButton';
 import { useCigarApp } from '@/context/CigarAppContext';
-import { saveSupabaseCigars } from '@/lib/supabaseCigars';
-import { saveSupabaseHumidors } from '@/lib/supabaseHumidors';
-import { saveSupabaseSmokeLogs } from '@/lib/supabaseSmokeLogs';
+import { replaceSupabaseCigars, saveSupabaseCigars } from '@/lib/supabaseCigars';
+import {
+  replaceSupabaseHumidors,
+  saveSupabaseHumidors,
+} from '@/lib/supabaseHumidors';
+import {
+  replaceSupabaseSmokeLogs,
+  saveSupabaseSmokeLogs,
+} from '@/lib/supabaseSmokeLogs';
 import { saveSupabasePairingTypes } from '@/lib/supabasePairingTypes';
 import { saveSupabasePairingLogs } from '@/lib/supabasePairingLogs';
 import { saveSupabaseWishList } from '@/lib/supabaseWishList';
@@ -155,7 +161,7 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleStartFresh() {
+    async function handleStartFresh() {
     if (resetConfirmText !== 'START FRESH') {
       setResetMessage('Type START FRESH to confirm.');
       return;
@@ -187,9 +193,9 @@ export default function SettingsPage() {
 
       await Promise.all([
         resetUserAppData(),
-        saveSupabaseHumidors([]),
-        saveSupabaseCigars([]),
-        saveSupabaseSmokeLogs([]),
+        replaceSupabaseHumidors([]),
+        replaceSupabaseCigars([]),
+        replaceSupabaseSmokeLogs([]),
         saveSupabaseReflections({}),
         saveSupabaseWishList([]),
         saveSupabasePairingTypes([]),
