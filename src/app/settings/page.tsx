@@ -35,7 +35,7 @@ export default function SettingsPage() {
     setQuickLogSelection,
   } = useCigarApp();
 
-    const [importMessage, setImportMessage] = useState('');
+  const [importMessage, setImportMessage] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [resetConfirmText, setResetConfirmText] = useState('');
   const [resetMessage, setResetMessage] = useState('');
@@ -78,7 +78,7 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url);
   }
 
-      async function handleImportBackup(event: ChangeEvent<HTMLInputElement>) {
+  async function handleImportBackup(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -107,6 +107,7 @@ export default function SettingsPage() {
       const nextPairingLogs = Array.isArray(data.pairingLogs)
         ? data.pairingLogs
         : [];
+      const nextQuickLogSelection = data.quickLogSelection ?? null;
 
       setHumidors(nextHumidors);
       setCigars(nextCigars);
@@ -115,7 +116,24 @@ export default function SettingsPage() {
       setWishList(nextWishList);
       setPairingTypes(nextPairingTypes);
       setPairingLogs(nextPairingLogs);
-      setQuickLogSelection(data.quickLogSelection ?? null);
+      setQuickLogSelection(nextQuickLogSelection);
+
+      localStorage.setItem('humidors', JSON.stringify(nextHumidors));
+      localStorage.setItem('cigars', JSON.stringify(nextCigars));
+      localStorage.setItem('smokeLogs', JSON.stringify(nextSmokeLogs));
+      localStorage.setItem('smokeReflections', JSON.stringify(nextReflections));
+      localStorage.setItem('wishList', JSON.stringify(nextWishList));
+      localStorage.setItem('pairingTypes', JSON.stringify(nextPairingTypes));
+      localStorage.setItem('pairingLogs', JSON.stringify(nextPairingLogs));
+
+      if (nextQuickLogSelection) {
+        localStorage.setItem(
+          'quickLogSelection',
+          JSON.stringify(nextQuickLogSelection)
+        );
+      } else {
+        localStorage.removeItem('quickLogSelection');
+      }
 
       await Promise.all([
         saveSupabaseHumidors(nextHumidors),
@@ -127,17 +145,17 @@ export default function SettingsPage() {
         saveSupabasePairingLogs(nextPairingLogs),
       ]);
 
-      setImportMessage('Backup restored successfully.');
+      setImportMessage('Backup imported successfully.');
     } catch (error) {
-      console.error(error);
-      setImportMessage('Failed to restore backup.');
+      console.error('Failed to import backup:', error);
+      setImportMessage('Failed to import backup file.');
     } finally {
       setIsImporting(false);
       event.target.value = '';
     }
   }
 
-    async function handleStartFresh() {
+  async function handleStartFresh() {
     if (resetConfirmText !== 'START FRESH') {
       setResetMessage('Type START FRESH to confirm.');
       return;
@@ -146,7 +164,7 @@ export default function SettingsPage() {
     setIsResetting(true);
     setResetMessage('Clearing app data...');
 
-        try {
+    try {
       localStorage.setItem('myCigarCellarStartFresh', 'true');
 
       setHumidors([]);
@@ -257,7 +275,7 @@ export default function SettingsPage() {
             ) : null}
           </div>
 
-                    <div className="mt-6 rounded-2xl border border-[#3a2a0f] bg-black/40 p-4">
+          <div className="mt-6 rounded-2xl border border-[#3a2a0f] bg-black/40 p-4">
             <div className="text-[10px] uppercase tracking-[0.16em] text-[#c8821f]">
               Data Status
             </div>
@@ -284,13 +302,14 @@ export default function SettingsPage() {
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-white/65">
-              This clears your humidors, cigars, smoke logs, reflections, wish list,
-              and pairing data. Your login remains active. Download a backup before
-              using this.
+              This clears your humidors, cigars, smoke logs, reflections, wish
+              list, and pairing data. Your login remains active. Download a
+              backup before using this.
             </p>
 
             <div className="mt-4 rounded-xl border border-red-500/20 bg-black/40 px-4 py-3 text-sm text-red-200/80">
-              To confirm, type <span className="font-semibold text-red-200">START FRESH</span>.
+              To confirm, type{' '}
+              <span className="font-semibold text-red-200">START FRESH</span>.
             </div>
 
             <input
