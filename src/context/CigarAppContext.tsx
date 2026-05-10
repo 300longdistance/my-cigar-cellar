@@ -15,27 +15,27 @@ import {
   saveSupabaseCigars,
 } from '@/lib/supabaseCigars';
 import {
-  migrateAppDataSmokeLogsToTable,
+  getSupabaseSmokeLogs,
   saveSupabaseSmokeLogs,
 } from '@/lib/supabaseSmokeLogs';
 import {
-  migrateAppDataPairingTypesToTable,
+  getSupabasePairingTypes,
   saveSupabasePairingTypes,
 } from '@/lib/supabasePairingTypes';
 import {
-  migrateAppDataPairingLogsToTable,
+  getSupabasePairingLogs,
   saveSupabasePairingLogs,
 } from '@/lib/supabasePairingLogs';
 import {
-  migrateAppDataWishListToTable,
+  getSupabaseWishList,
   saveSupabaseWishList,
 } from '@/lib/supabaseWishList';
 import {
-  migrateAppDataHumidorsToTable,
+  getSupabaseHumidors,
   saveSupabaseHumidors,
 } from '@/lib/supabaseHumidors';
 import {
-  migrateAppDataReflectionsToTable,
+  getSupabaseReflections,
   saveSupabaseReflections,
 } from '@/lib/supabaseReflections';
 import type { PairingLog, PairingType } from '@/types/pairing';
@@ -199,7 +199,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     applyNormalizedData(buildLocalCacheData());
   }
 
-    async function loadSupabaseUserAndData() {
+      async function loadSupabaseUserAndData() {
     const {
       data: { user: nextUser },
     } = await supabase.auth.getUser();
@@ -229,8 +229,6 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const localData = buildLocalCacheData();
-
       const [
         tableHumidors,
         tableCigars,
@@ -240,13 +238,13 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
         tablePairingTypes,
         tablePairingLogs,
       ] = await Promise.all([
-        migrateAppDataHumidorsToTable(localData.humidors),
+        getSupabaseHumidors(),
         getSupabaseCigars(),
-        migrateAppDataSmokeLogsToTable(localData.smokeLogs),
-        migrateAppDataReflectionsToTable(localData.reflections),
-        migrateAppDataWishListToTable(localData.wishList),
-        migrateAppDataPairingTypesToTable(localData.pairingTypes),
-        migrateAppDataPairingLogsToTable(localData.pairingLogs),
+        getSupabaseSmokeLogs(),
+        getSupabaseReflections(),
+        getSupabaseWishList(),
+        getSupabasePairingTypes(),
+        getSupabasePairingLogs(),
       ]);
 
       applyNormalizedData({
@@ -257,7 +255,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
         wishList: tableWishList,
         pairingTypes: tablePairingTypes,
         pairingLogs: tablePairingLogs,
-        quickLogSelection: localData.quickLogSelection,
+        quickLogSelection: null,
       });
     } catch (error) {
       console.error('Failed to load normalized Supabase data:', error);
