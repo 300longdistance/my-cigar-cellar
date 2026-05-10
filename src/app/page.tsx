@@ -89,7 +89,7 @@ export default function HomePage() {
     Settings
   </Link>
 </div>
-              <div className="relative h-[82vh] max-h-[980px] w-full bg-black">
+              <div className="relative h-[90vh] max-h-[1120px] w-full bg-black">
                 <Image
                   src="/images/main-home-v2.png"
                   alt="My Cigar Cellar main scene"
