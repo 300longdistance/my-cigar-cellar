@@ -89,13 +89,13 @@ export default function HomePage() {
     Settings
   </Link>
 </div>
-              <div className="relative h-[90vh] max-h-[1120px] w-full bg-black">
+              <div className="relative aspect-4/5 w-full bg-black landscape:h-[90vh] landscape:max-h-[1120px] landscape:aspect-auto">
                 <Image
                   src="/images/main-home-v2.png"
                   alt="My Cigar Cellar main scene"
                   fill
                   sizes="100vw"
-                  className="object-contain object-center"
+                  className="object-cover object-[center_35%] sm:object-contain landscape:object-contain landscape:object-center"
                   priority
                 />
 
