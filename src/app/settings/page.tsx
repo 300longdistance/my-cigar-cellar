@@ -15,7 +15,10 @@ import {
 } from '@/lib/supabaseSmokeLogs';
 import { saveSupabasePairingTypes } from '@/lib/supabasePairingTypes';
 import { saveSupabasePairingLogs } from '@/lib/supabasePairingLogs';
-import { saveSupabaseWishList } from '@/lib/supabaseWishList';
+import {
+  replaceSupabaseWishList,
+  saveSupabaseWishList,
+} from '@/lib/supabaseWishList';
 import { saveSupabaseReflections } from '@/lib/supabaseReflections';
 import { resetUserAppData } from '@/lib/supabaseAppData';
 
@@ -197,7 +200,7 @@ export default function SettingsPage() {
         replaceSupabaseCigars([]),
         replaceSupabaseSmokeLogs([]),
         saveSupabaseReflections({}),
-        saveSupabaseWishList([]),
+                replaceSupabaseWishList([]),
         saveSupabasePairingTypes([]),
         saveSupabasePairingLogs([]),
       ]);

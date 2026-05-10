@@ -50,7 +50,10 @@ function rowToWishListItem(row: SupabaseWishListRow): WishListItem {
     origin: row.origin,
     strength: row.strength,
     notes: row.notes,
-    priority: row.priority === 'High' || row.priority === 'Low' ? row.priority : 'Medium',
+    priority:
+      row.priority === 'High' || row.priority === 'Low'
+        ? row.priority
+        : 'Medium',
   };
 }
 
@@ -95,7 +98,9 @@ export async function getSupabaseWishList() {
 
   if (error) throw error;
 
-  return dedupeWishList(((data ?? []) as SupabaseWishListRow[]).map(rowToWishListItem));
+  return dedupeWishList(
+    ((data ?? []) as SupabaseWishListRow[]).map(rowToWishListItem)
+  );
 }
 
 export async function saveSupabaseWishList(items: WishListItem[]) {
@@ -116,6 +121,35 @@ export async function saveSupabaseWishList(items: WishListItem[]) {
   });
 
   if (error) throw error;
+}
+
+export async function replaceSupabaseWishList(items: WishListItem[]) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const deleteResult = await supabase
+    .from('wish_list')
+    .delete()
+    .eq('user_id', user.id);
+
+  if (deleteResult.error) {
+    throw deleteResult.error;
+  }
+
+  const dedupedItems = dedupeWishList(items);
+
+  if (dedupedItems.length === 0) return;
+
+  const rows = dedupedItems.map((item) => wishListItemToRow(item, user.id));
+
+  const insertResult = await supabase.from('wish_list').insert(rows);
+
+  if (insertResult.error) {
+    throw insertResult.error;
+  }
 }
 
 export async function migrateAppDataWishListToTable(items: WishListItem[]) {
