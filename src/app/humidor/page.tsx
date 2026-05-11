@@ -222,8 +222,11 @@ const [aiCaptureMessage, setAiCaptureMessage] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     const imageInputRef = useRef<HTMLInputElement | null>(null);
-  const newImageInputRef = useRef<HTMLInputElement | null>(null);
-  const aiCaptureInputRef = useRef<HTMLInputElement | null>(null);
+const imageFileInputRef = useRef<HTMLInputElement | null>(null);
+const newImageInputRef = useRef<HTMLInputElement | null>(null);
+const newImageFileInputRef = useRef<HTMLInputElement | null>(null);
+const aiCaptureInputRef = useRef<HTMLInputElement | null>(null);
+const aiCaptureFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const newCigarNameRef = useRef<HTMLInputElement | null>(null);
 const newCigarBrandRef = useRef<HTMLInputElement | null>(null);
@@ -1084,16 +1087,28 @@ function confirmRemoveSelectedCigar() {
   }
 
   function triggerImagePicker() {
-    imageInputRef.current?.click();
-  }
+  imageInputRef.current?.click();
+}
 
-  function triggerNewImagePicker() {
-    newImageInputRef.current?.click();
-  }
+function triggerImageFilePicker() {
+  imageFileInputRef.current?.click();
+}
 
-    function triggerAiCapturePicker() {
-    aiCaptureInputRef.current?.click();
-  }
+function triggerNewImagePicker() {
+  newImageInputRef.current?.click();
+}
+
+function triggerNewImageFilePicker() {
+  newImageFileInputRef.current?.click();
+}
+
+function triggerAiCapturePicker() {
+  aiCaptureInputRef.current?.click();
+}
+
+function triggerAiCaptureFilePicker() {
+  aiCaptureFileInputRef.current?.click();
+}
 
   function applyAiCaptureResult(result: AiCaptureResult, imageUrl: string) {
     setDraftForm((current) => ({
