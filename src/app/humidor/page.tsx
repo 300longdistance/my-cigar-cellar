@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useCigarApp } from '@/context/CigarAppContext';
-import { saveUserAppData } from '@/lib/supabaseAppData';
 import { uploadCigarImage } from '@/lib/supabaseImages';
 import { supabase } from '@/lib/supabase/client';
 
@@ -155,7 +154,15 @@ const sizeOptions = [
 ];
 
 export default function HumidorPage() {
-  const { humidors, setHumidors, cigars, setCigars } = useCigarApp();
+  const {
+  humidors,
+  setHumidors,
+  cigars,
+  setCigars,
+  smokeLogs,
+  setSmokeLogs,
+  setQuickLogSelection,
+} = useCigarApp();
 const [selectedHumidor, setSelectedHumidor] = useState<string>('');
 const [selectedId, setSelectedId] = useState<number | null>(defaultCigars[0]?.id ?? null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -209,11 +216,9 @@ const [aiCaptureMessage, setAiCaptureMessage] = useState('');
   const [newHumidorName, setNewHumidorName] = useState('');
   const [renameHumidorName, setRenameHumidorName] = useState('');
 
-  const [smokeLogs, setSmokeLogs] = useState<SmokeLogEntry[]>([]);
-  const [expandedSmokeLogId, setExpandedSmokeLogId] = useState<number | null>(null);
+    const [expandedSmokeLogId, setExpandedSmokeLogId] = useState<number | null>(null);
   const [editingSmokeLogId, setEditingSmokeLogId] = useState<number | null>(null);
   const [smokeDraft, setSmokeDraft] = useState<SmokeLogDraft>(emptySmokeDraft);
-  const [hasLoadedStorage, setHasLoadedStorage] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -234,59 +239,7 @@ const editCigarWrapperRef = useRef<HTMLInputElement | null>(null);
 const editCigarSizeRef = useRef<HTMLInputElement | null>(null);
 const editCigarOriginRef = useRef<HTMLInputElement | null>(null);
 
-  function loadSmokeLogsFromStorage() {
-    const savedSmokeLogs = localStorage.getItem('smokeLogs');
-
-    if (!savedSmokeLogs) {
-      setSmokeLogs([]);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(savedSmokeLogs) as SmokeLogEntry[];
-
-      if (Array.isArray(parsed)) {
-        setSmokeLogs(parsed);
-      } else {
-        setSmokeLogs([]);
-      }
-    } catch (error) {
-      console.error('Failed to load smoke logs from localStorage:', error);
-      setSmokeLogs([]);
-    }
-  }
-
-  useEffect(() => {
-    loadSmokeLogsFromStorage();
-    setHasLoadedStorage(true);
-  }, []);
-
-     useEffect(() => {
-    if (!hasLoadedStorage) return;
-    localStorage.setItem('smokeLogs', JSON.stringify(smokeLogs));
-  }, [smokeLogs, hasLoadedStorage]);
-
-  useEffect(() => {
-    function refreshSmokeLogs() {
-      loadSmokeLogsFromStorage();
-    }
-
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') {
-        loadSmokeLogsFromStorage();
-      }
-    }
-
-    window.addEventListener('focus', refreshSmokeLogs);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', refreshSmokeLogs);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
-  const totalCigarsInSelectedHumidor = useMemo(() => {
+    const totalCigarsInSelectedHumidor = useMemo(() => {
     return cigars
       .filter((cigar) => cigar.humidor === selectedHumidor)
       .reduce((sum, cigar) => sum + cigar.qty, 0);
@@ -678,17 +631,14 @@ useEffect(() => {
     setRenameHumidorName(selectedHumidor);
   }, [selectedHumidor]);
 
-  useEffect(() => {
-  if (!selectedHumidor) return;
+    useEffect(() => {
+    if (!selectedHumidor) return;
 
-  localStorage.setItem(
-    'quickLogSelection',
-    JSON.stringify({
+    setQuickLogSelection({
       humidor: selectedHumidor,
       cigarId: selectedId,
-    })
-  );
-}, [selectedHumidor, selectedId]);
+    });
+  }, [selectedHumidor, selectedId, setQuickLogSelection]);
 
 useEffect(() => {
   function handleWindowClick() {
@@ -803,47 +753,38 @@ useEffect(() => {
     }
   }
 
-  async function saveNewCigar() {
-  const trimmedName = draftForm.name.trim();
-  const trimmedBrand = draftForm.brand.trim();
-  const nextHumidor = draftForm.humidor.trim();
+    function saveNewCigar() {
+    const trimmedName = draftForm.name.trim();
+    const trimmedBrand = draftForm.brand.trim();
+    const nextHumidor = draftForm.humidor.trim();
 
-  if (!trimmedName) return;
-  if (!nextHumidor) return;
+    if (!trimmedName) return;
+    if (!nextHumidor) return;
 
-  const isNewHumidor = !humidors.includes(nextHumidor);
+    const isNewHumidor = !humidors.includes(nextHumidor);
+    const nextHumidors = isNewHumidor ? [...humidors, nextHumidor] : humidors;
 
-  const nextHumidors = isNewHumidor
-    ? [...humidors, nextHumidor]
-    : humidors;
+    const newCigar: Cigar = {
+      id: Date.now(),
+      name: trimmedName,
+      brand: trimmedBrand || 'Unknown Brand',
+      humidor: nextHumidor,
+      qty: Math.max(1, draftForm.qty || 1),
+      origin: draftForm.origin.trim() || 'Unknown',
+      wrapper: draftForm.wrapper.trim() || 'Unknown',
+      strength: draftForm.strength.trim() || 'Unknown',
+      size: draftForm.size.trim() || 'Unknown',
+      notes: draftForm.notes.trim(),
+      favorite: false,
+      image: draftForm.image,
+    };
 
-  const newCigar = {
-    id: Date.now(),
-    name: trimmedName,
-    brand: trimmedBrand || 'Unknown Brand',
-    humidor: nextHumidor,
-    qty: Math.max(1, draftForm.qty || 1),
-    origin: draftForm.origin.trim() || 'Unknown',
-    wrapper: draftForm.wrapper.trim() || 'Unknown',
-    strength: draftForm.strength.trim() || 'Unknown',
-    size: draftForm.size.trim() || 'Unknown',
-    notes: draftForm.notes.trim(),
-    favorite: false,
-    image: draftForm.image,
-  };
+    const nextCigars = [newCigar, ...cigars];
 
-  const nextCigars = [newCigar, ...cigars];
-
-  try {
-    await saveUserAppData({
-      humidors: nextHumidors,
-      cigars: nextCigars,
-    });
-
-        setHumidors(nextHumidors);
+    setHumidors(nextHumidors);
     setCigars(nextCigars);
     setSelectedHumidor(nextHumidor);
-        setSelectedId(newCigar.id);
+    setSelectedId(newCigar.id);
     setIsCreatingNew(false);
     setIsCigarDetailOpen(false);
     setSearchTerm('');
@@ -860,10 +801,7 @@ useEffect(() => {
       notes: newCigar.notes,
       image: newCigar.image,
     });
-  } catch (error) {
-    console.error('Failed to save cigar to Firestore:', error);
   }
-}
 
   function updateDraftField(updates: Partial<FormState>) {
     setDraftForm((current) => ({ ...current, ...updates }));

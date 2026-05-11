@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCigarApp } from '@/context/CigarAppContext';
 
 function formatDisplayDate(value: string) {
   const date = new Date(value);
@@ -144,53 +145,9 @@ type SmokeLogEntry = {
 };
 
 export default function PairingsPage() {
-  const [smokeLogs, setSmokeLogs] = useState<SmokeLogEntry[]>([]);
+  const { smokeLogs } = useCigarApp();
 
   const safeSmokeLogs = Array.isArray(smokeLogs) ? smokeLogs : [];
-
-  useEffect(() => {
-    function loadSmokeLogsFromStorage() {
-      const savedSmokeLogs = localStorage.getItem('smokeLogs');
-
-      if (!savedSmokeLogs) {
-        setSmokeLogs([]);
-        return;
-      }
-
-      try {
-        const parsed = JSON.parse(savedSmokeLogs) as SmokeLogEntry[];
-
-        if (Array.isArray(parsed)) {
-          setSmokeLogs(parsed);
-        } else {
-          setSmokeLogs([]);
-        }
-      } catch (error) {
-        console.error('Failed to load smoke logs for pairings:', error);
-        setSmokeLogs([]);
-      }
-    }
-
-    loadSmokeLogsFromStorage();
-
-    function handleFocus() {
-      loadSmokeLogsFromStorage();
-    }
-
-    function handleVisibilityChange() {
-      if (document.visibilityState === 'visible') {
-        loadSmokeLogsFromStorage();
-      }
-    }
-
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
 
   const [lookupMode, setLookupMode] = useState<LookupMode>('pairingToCigar');
   const [activeTab, setActiveTab] = useState<LowerTab>('matches');
@@ -506,7 +463,7 @@ export default function PairingsPage() {
 
                 <div className="mt-5">
                   <Link
-                    href="/log"
+                    href="/smoke-log"
                     className="inline-flex items-center justify-center rounded-[16px] border border-[#6b4217] bg-[#111216] px-4 py-3 text-[14px] text-white transition hover:bg-[#15181d]"
                   >
                     Log a smoke
