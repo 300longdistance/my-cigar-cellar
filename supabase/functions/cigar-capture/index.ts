@@ -2,6 +2,13 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 type CigarCaptureResult = {
   brand: string;
   name: string;
@@ -17,35 +24,78 @@ function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
+      ...corsHeaders,
       "Content-Type": "application/json",
     },
   });
 }
 
+function normalizeText(value: unknown) {
+  if (typeof value !== "string") return "";
+
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function normalizeConfidence(value: unknown) {
+  if (typeof value !== "number") return 0;
+
+  return Math.max(0, Math.min(1, value));
+}
+
 function normalizeResult(value: Partial<CigarCaptureResult>): CigarCaptureResult {
   return {
-    brand: typeof value.brand === "string" ? value.brand : "",
-    name: typeof value.name === "string" ? value.name : "",
-    size: typeof value.size === "string" ? value.size : "",
-    wrapper: typeof value.wrapper === "string" ? value.wrapper : "",
-    origin: typeof value.origin === "string" ? value.origin : "",
-    strength: typeof value.strength === "string" ? value.strength : "",
-    notes: typeof value.notes === "string" ? value.notes : "",
-    confidence:
-      typeof value.confidence === "number"
-        ? Math.max(0, Math.min(1, value.confidence))
-        : 0,
+    brand: normalizeText(value.brand),
+    name: normalizeText(value.name),
+    size: normalizeText(value.size),
+    wrapper: normalizeText(value.wrapper),
+    origin: normalizeText(value.origin),
+    strength: normalizeText(value.strength),
+    notes: normalizeText(value.notes),
+    confidence: normalizeConfidence(value.confidence),
   };
 }
 
+function extractOutputText(openAiData: any) {
+  if (typeof openAiData?.output_text === "string") {
+    return openAiData.output_text;
+  }
+
+  const output = Array.isArray(openAiData?.output) ? openAiData.output : [];
+
+  for (const item of output) {
+    const content = Array.isArray(item?.content) ? item.content : [];
+
+    for (const contentItem of content) {
+      if (
+        contentItem?.type === "output_text" &&
+        typeof contentItem?.text === "string"
+      ) {
+        return contentItem.text;
+      }
+    }
+  }
+
+  return "{}";
+}
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: corsHeaders,
+    });
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
+  }
+
   try {
     if (!OPENAI_API_KEY) {
       return jsonResponse({ error: "Missing OPENAI_API_KEY" }, 500);
     }
 
     const body = await req.json();
-    const image = body.image;
+    const image = body?.image;
 
     if (!image || typeof image !== "string") {
       return jsonResponse({ error: "Missing image" }, 400);
@@ -58,7 +108,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-5",
+        model: "gpt-4.1-mini",
         input: [
           {
             role: "system",
@@ -66,7 +116,7 @@ Deno.serve(async (req) => {
               {
                 type: "input_text",
                 text:
-                  "You are a cigar identification assistant. Extract premium cigar information from cigar bands, cigar boxes, labels, packaging, and visible cigar text. Prefer real cigar product names over generic descriptions. If the image shows a cigar band, treat the band as the primary source. If the image shows a box, use box text and branding. If multiple cigars appear, identify the dominant/front cigar. Use empty strings when uncertain. Do not invent exact details when not visible or reasonably inferable.",
+                  "You are a cigar identification assistant. Extract premium cigar information from cigar bands, boxes, labels, packaging, and visible text. Use only what is visible or reasonably inferable. Do not invent exact product details. If uncertain, use empty strings. Return only valid JSON matching the schema.",
               },
             ],
           },
@@ -76,7 +126,7 @@ Deno.serve(async (req) => {
               {
                 type: "input_text",
                 text:
-                  "Identify this cigar and return the best possible structured details. For name, use the cigar line or blend name, not just the brand. For size, use vitola when visible or reasonably identifiable. For strength, use Mild, Mild-Medium, Medium, Medium-Full, or Full when reasonably inferable. Return only the requested JSON fields.",
+                  "Identify this cigar. For brand, use the manufacturer or visible brand. For name, use the line, blend, or cigar name, not only the brand. For size, use vitola when visible or reasonably identifiable. For wrapper, origin, and strength, fill only if visible or reasonably inferable. Strength must be one of Mild, Mild-Medium, Medium, Medium-Full, Full, or empty. Add brief notes describing visible text and uncertainty.",
               },
               {
                 type: "input_image",
@@ -126,6 +176,8 @@ Deno.serve(async (req) => {
     if (!openAiResponse.ok) {
       const errorText = await openAiResponse.text();
 
+      console.error("OpenAI request failed:", errorText);
+
       return jsonResponse(
         {
           error: "OpenAI request failed",
@@ -136,16 +188,27 @@ Deno.serve(async (req) => {
     }
 
     const openAiData = await openAiResponse.json();
-    const outputText =
-      openAiData?.output?.[0]?.content?.find(
-        (item: { type?: string }) => item.type === "output_text"
-      )?.text ?? "{}";
+    const outputText = extractOutputText(openAiData);
 
-    const parsed = JSON.parse(outputText);
+    let parsed: Partial<CigarCaptureResult> = {};
+
+    try {
+      parsed = JSON.parse(outputText);
+    } catch (error) {
+      console.error("Failed to parse OpenAI JSON:", outputText, error);
+
+      return jsonResponse(
+        {
+          error: "Failed to parse AI response",
+          raw: outputText,
+        },
+        500
+      );
+    }
 
     return jsonResponse(normalizeResult(parsed));
   } catch (error) {
-    console.error(error);
+    console.error("AI cigar extraction failed:", error);
 
     return jsonResponse(
       {
