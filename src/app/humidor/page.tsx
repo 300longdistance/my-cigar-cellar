@@ -1132,53 +1132,65 @@ function triggerAiCaptureFilePicker() {
   }
 
   async function handleAiCaptureImageChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+  const file = event.target.files?.[0];
 
-    if (!file) return;
+  if (!file) return;
 
-    setIsAiCapturing(true);
-    setAiCaptureMessage('');
+  setIsAiCapturing(true);
+  setAiCaptureMessage('Reading image...');
 
-    try {
-      const imageForAi = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
+  try {
+    const imageForAi = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
 
-        reader.onload = () => {
-          resolve(reader.result as string);
-        };
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
 
-        reader.onerror = () => {
-          reject(new Error('Failed to read image.'));
-        };
+      reader.onerror = () => {
+        reject(new Error('Failed to read image file in browser.'));
+      };
 
-        reader.readAsDataURL(file);
-      });
+      reader.readAsDataURL(file);
+    });
 
-      const temporaryImageId = `ai-new-${Date.now()}`;
-      const imageUrl = await uploadCigarImage(file, temporaryImageId);
+    setAiCaptureMessage('Uploading photo...');
 
-      const { data, error } = await supabase.functions.invoke('cigar-capture', {
-        body: {
-          image: imageForAi,
-        },
-      });
+    const temporaryImageId = `ai-new-${Date.now()}`;
+    const imageUrl = await uploadCigarImage(file, temporaryImageId);
 
-      if (error) {
-        console.error(error);
-        setDraftForm((current) => ({ ...current, image: imageUrl }));
-        setAiCaptureMessage('Photo saved, but AI could not read the cigar. Enter details manually.');
-        return;
-      }
+    setDraftForm((current) => ({ ...current, image: imageUrl }));
+    setAiCaptureMessage('Sending photo to AI...');
 
-      applyAiCaptureResult((data ?? {}) as AiCaptureResult, imageUrl);
-    } catch (error) {
-      console.error('AI cigar capture failed:', error);
-      setAiCaptureMessage('AI capture failed. You can still enter the cigar manually.');
-    } finally {
-      setIsAiCapturing(false);
-      event.target.value = '';
+    const { data, error } = await supabase.functions.invoke('cigar-capture', {
+      body: {
+        image: imageForAi,
+      },
+    });
+
+    if (error) {
+      console.error('Supabase function error:', error);
+      setAiCaptureMessage(
+        `AI function error: ${error.message || 'Unknown Supabase function error.'}`
+      );
+      return;
     }
+
+    console.log('AI capture response:', data);
+
+    applyAiCaptureResult((data ?? {}) as AiCaptureResult, imageUrl);
+  } catch (error) {
+    console.error('AI cigar capture failed:', error);
+
+    const message =
+      error instanceof Error ? error.message : 'Unknown browser-side error.';
+
+    setAiCaptureMessage(`AI capture failed: ${message}`);
+  } finally {
+    setIsAiCapturing(false);
+    event.target.value = '';
   }
+}
 
   function updateSelectedCigarImage(image: string | undefined) {
     if (!selectedCigar || isCreatingNew) return;
