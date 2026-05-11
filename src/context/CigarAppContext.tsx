@@ -28,7 +28,7 @@ import {
 } from '@/lib/supabasePairingLogs';
 import {
   getSupabaseWishList,
-  saveSupabaseWishList,
+  replaceSupabaseWishList,
 } from '@/lib/supabaseWishList';
 import {
   getSupabaseHumidors,
@@ -319,8 +319,8 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
       console.error('Failed to save normalized Supabase pairing logs:', error);
     });
 
-    saveSupabaseWishList(wishList).catch((error) => {
-      console.error('Failed to save normalized Supabase wish list:', error);
+        replaceSupabaseWishList(wishList).catch((error) => {
+      console.error('Failed to replace normalized Supabase wish list:', error);
     });
 
     saveSupabaseHumidors(humidors).catch((error) => {
