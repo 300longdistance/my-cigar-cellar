@@ -10,14 +10,8 @@ import {
 } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
-import {
-  getSupabaseCigars,
-  saveSupabaseCigars,
-} from '@/lib/supabaseCigars';
-import {
-  getSupabaseSmokeLogs,
-  saveSupabaseSmokeLogs,
-} from '@/lib/supabaseSmokeLogs';
+import { getSupabaseCigars, saveSupabaseCigars } from '@/lib/supabaseCigars';
+import { getSupabaseSmokeLogs, saveSupabaseSmokeLogs } from '@/lib/supabaseSmokeLogs';
 import {
   getSupabasePairingTypes,
   saveSupabasePairingTypes,
@@ -30,14 +24,8 @@ import {
   getSupabaseWishList,
   replaceSupabaseWishList,
 } from '@/lib/supabaseWishList';
-import {
-  getSupabaseHumidors,
-  saveSupabaseHumidors,
-} from '@/lib/supabaseHumidors';
-import {
-  getSupabaseReflections,
-  saveSupabaseReflections,
-} from '@/lib/supabaseReflections';
+import { getSupabaseHumidors, saveSupabaseHumidors } from '@/lib/supabaseHumidors';
+import { getSupabaseReflections, saveSupabaseReflections } from '@/lib/supabaseReflections';
 import type { PairingLog, PairingType } from '@/types/pairing';
 
 export type StoredCigar = {
@@ -119,17 +107,16 @@ type CigarAppContextValue = {
   refreshFromStorage: () => void;
 };
 
-const defaultHumidors: string[] = [];
-const fallbackCigars: StoredCigar[] = [];
-const defaultWishList: WishListItem[] = [];
-
-const defaultPairingTypes: PairingType[] = [
-  { id: 201, name: 'My favorite coffee', category: 'Coffee' },
-  { id: 202, name: 'Aged rum', category: 'Rum' },
-  { id: 203, name: 'Bold bourbon', category: 'Bourbon' },
-];
-
-const defaultPairingLogs: PairingLog[] = [];
+const emptyData: LocalCacheData = {
+  humidors: [],
+  cigars: [],
+  smokeLogs: [],
+  reflections: {},
+  wishList: [],
+  pairingTypes: [],
+  pairingLogs: [],
+  quickLogSelection: null,
+};
 
 const CigarAppContext = createContext<CigarAppContextValue | null>(null);
 
@@ -165,25 +152,23 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isApplyingCloudData, setIsApplyingCloudData] = useState(false);
 
-  const [humidors, setHumidors] = useState<string[]>(defaultHumidors);
-  const [cigars, setCigars] = useState<StoredCigar[]>(fallbackCigars);
+  const [humidors, setHumidors] = useState<string[]>([]);
+  const [cigars, setCigars] = useState<StoredCigar[]>([]);
   const [smokeLogs, setSmokeLogs] = useState<SmokeLogEntry[]>([]);
   const [reflections, setReflections] = useState<ReflectionDrafts>({});
-  const [wishList, setWishList] = useState<WishListItem[]>(defaultWishList);
-  const [pairingTypes, setPairingTypes] = useState<PairingType[]>(defaultPairingTypes);
-  const [pairingLogs, setPairingLogs] = useState<PairingLog[]>(defaultPairingLogs);
+  const [wishList, setWishList] = useState<WishListItem[]>([]);
+  const [pairingTypes, setPairingTypes] = useState<PairingType[]>([]);
+  const [pairingLogs, setPairingLogs] = useState<PairingLog[]>([]);
   const [quickLogSelection, setQuickLogSelection] = useState<QuickLogSelection | null>(null);
 
-    function applyNormalizedData(data: LocalCacheData) {
+  function applyNormalizedData(data: LocalCacheData) {
     setIsApplyingCloudData(true);
 
     setHumidors(Array.isArray(data.humidors) ? data.humidors : []);
     setCigars(Array.isArray(data.cigars) ? data.cigars : []);
     setSmokeLogs(Array.isArray(data.smokeLogs) ? data.smokeLogs : []);
     setReflections(
-      data.reflections && typeof data.reflections === 'object'
-        ? data.reflections
-        : {}
+      data.reflections && typeof data.reflections === 'object' ? data.reflections : {}
     );
     setWishList(Array.isArray(data.wishList) ? data.wishList : []);
     setPairingTypes(Array.isArray(data.pairingTypes) ? data.pairingTypes : []);
@@ -199,7 +184,19 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     applyNormalizedData(buildLocalCacheData());
   }
 
-      async function loadSupabaseUserAndData() {
+  async function wipeSupabaseData() {
+    await Promise.all([
+      saveSupabaseHumidors([]),
+      saveSupabaseCigars([]),
+      saveSupabaseSmokeLogs([]),
+      saveSupabaseReflections({}),
+      replaceSupabaseWishList([]),
+      saveSupabasePairingTypes([]),
+      saveSupabasePairingLogs([]),
+    ]);
+  }
+
+  async function loadSupabaseUserAndData() {
     const {
       data: { user: nextUser },
     } = await supabase.auth.getUser();
@@ -207,22 +204,19 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     setUser(nextUser);
 
     if (!nextUser) {
+      applyNormalizedData(buildLocalCacheData());
       setHasLoadedStorage(true);
       return;
     }
 
     if (localStorage.getItem('myCigarCellarStartFresh') === 'true') {
-      applyNormalizedData({
-        humidors: [],
-        cigars: [],
-        smokeLogs: [],
-        reflections: {},
-        wishList: [],
-        pairingTypes: [],
-        pairingLogs: [],
-        quickLogSelection: null,
-      });
+      try {
+        await wipeSupabaseData();
+      } catch (error) {
+        console.error('Failed to wipe normalized Supabase data:', error);
+      }
 
+      applyNormalizedData(emptyData);
       localStorage.removeItem('myCigarCellarStartFresh');
       setHasLoadedStorage(true);
       return;
@@ -259,13 +253,13 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error('Failed to load normalized Supabase data:', error);
+      applyNormalizedData(buildLocalCacheData());
     }
 
     setHasLoadedStorage(true);
   }
 
   useEffect(() => {
-    refreshFromStorage();
     loadSupabaseUserAndData();
 
     const {
@@ -275,6 +269,9 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
 
       if (session?.user) {
         loadSupabaseUserAndData();
+      } else {
+        applyNormalizedData(buildLocalCacheData());
+        setHasLoadedStorage(true);
       }
     });
 
@@ -319,7 +316,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
       console.error('Failed to save normalized Supabase pairing logs:', error);
     });
 
-        replaceSupabaseWishList(wishList).catch((error) => {
+    replaceSupabaseWishList(wishList).catch((error) => {
       console.error('Failed to replace normalized Supabase wish list:', error);
     });
 
@@ -380,11 +377,7 @@ export function CigarAppProvider({ children }: { children: ReactNode }) {
     ]
   );
 
-  return (
-    <CigarAppContext.Provider value={value}>
-      {children}
-    </CigarAppContext.Provider>
-  );
+  return <CigarAppContext.Provider value={value}>{children}</CigarAppContext.Provider>;
 }
 
 export function useCigarApp() {
