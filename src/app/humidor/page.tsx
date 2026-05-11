@@ -1778,8 +1778,9 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
 
             {isCreatingNew ? (
   <div className="mx-auto flex w-full max-w-[620px] flex-col gap-3">
-    <div className="rounded-[20px] bg-[#16181c] px-4 py-4">
-      <div className="flex gap-3">
+  <div className="rounded-[20px] bg-[#16181c] px-4 py-4">
+    <div className="flex gap-3">
+      <div className="flex flex-col gap-2">
         <button
           type="button"
           onClick={triggerNewImagePicker}
@@ -1800,67 +1801,92 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
           )}
         </button>
 
-        <div className="min-w-0 flex-1">
-          <div className="text-[20px] text-white">
-            {draftForm.name.trim() || 'New Cigar'}
+        <button
+          type="button"
+          onClick={triggerNewImageFilePicker}
+          className="rounded-[12px] border border-[#3a2a0f] bg-[#1b1d22] px-2 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-[#d6b16f] transition hover:border-[#c8882d]/60 hover:text-white"
+        >
+          From File
+        </button>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="text-[20px] text-white">
+          {draftForm.name.trim() || 'New Cigar'}
+        </div>
+
+        <div className="mt-1 text-[13px] text-white/60">
+          {draftForm.brand.trim() || 'Brand'}
+        </div>
+
+        <div className="mt-1 text-[13px] text-[#d58a24]">
+          in {draftForm.humidor || selectedHumidor}
+        </div>
+
+        <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
+          <input
+            ref={newImageInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleNewImageChange}
+            className="hidden"
+          />
+
+          <input
+            ref={newImageFileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleNewImageChange}
+            className="hidden"
+          />
+
+          <input
+            ref={aiCaptureInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleAiCaptureImageChange}
+            className="hidden"
+          />
+
+          <input
+            ref={aiCaptureFileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAiCaptureImageChange}
+            className="hidden"
+          />
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={triggerAiCapturePicker}
+              disabled={isAiCapturing || isUploadingImage}
+              className="rounded-full bg-[#c8882d] px-3 py-2 text-[12px] text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isAiCapturing ? 'Scanning...' : 'AI Scan'}
+            </button>
+
+            <button
+              type="button"
+              onClick={triggerAiCaptureFilePicker}
+              disabled={isAiCapturing || isUploadingImage}
+              className="rounded-full border border-[#3a2a0f] bg-[#121316] px-3 py-2 text-[12px] text-white/75 transition hover:bg-[#17191d] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              AI From File
+            </button>
           </div>
 
-          <div className="mt-1 text-[13px] text-white/60">
-            {draftForm.brand.trim() || 'Brand'}
-          </div>
-
-          <div className="mt-1 text-[13px] text-[#d58a24]">
-            in {draftForm.humidor || selectedHumidor}
-          </div>
-
-                    <div className="mt-3 border-t border-[#6b4217]/60 pt-3">
-            <input
-              ref={newImageInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleNewImageChange}
-              className="hidden"
-            />
-
-            <input
-              ref={aiCaptureInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleAiCaptureImageChange}
-              className="hidden"
-            />
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={triggerAiCapturePicker}
-                disabled={isAiCapturing || isUploadingImage}
-                className="rounded-full bg-[#c8882d] px-3 py-2 text-[12px] text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isAiCapturing ? 'Scanning...' : 'AI Scan'}
-              </button>
-
-              <button
-                type="button"
-                onClick={triggerNewImagePicker}
-                disabled={isAiCapturing || isUploadingImage}
-                className="rounded-full border border-[#3a2a0f] bg-[#121316] px-3 py-2 text-[12px] text-white/75 transition hover:bg-[#17191d] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Photo Only
-              </button>
+          {aiCaptureMessage && (
+            <div className="mt-2 rounded-[12px] border border-[#3a2a0f] bg-[#111215] px-3 py-2 text-[11px] leading-relaxed text-white/60">
+              {aiCaptureMessage}
             </div>
-
-            {aiCaptureMessage && (
-              <div className="mt-2 rounded-[12px] border border-[#3a2a0f] bg-[#111215] px-3 py-2 text-[11px] leading-relaxed text-white/60">
-                {aiCaptureMessage}
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>
+  </div>
 
     <div className="rounded-[20px] border border-[#3a2a0f] bg-[linear-gradient(180deg,#111214_0%,#0c0c0d_100%)] px-4 py-4 sm:px-5">
   <div className="mb-3">
