@@ -87,7 +87,7 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url);
   }
 
-  async function handleImportBackup(event: ChangeEvent<HTMLInputElement>) {
+    async function handleImportBackup(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -127,23 +127,6 @@ export default function SettingsPage() {
       setPairingLogs(nextPairingLogs);
       setQuickLogSelection(nextQuickLogSelection);
 
-      localStorage.setItem('humidors', JSON.stringify(nextHumidors));
-      localStorage.setItem('cigars', JSON.stringify(nextCigars));
-      localStorage.setItem('smokeLogs', JSON.stringify(nextSmokeLogs));
-      localStorage.setItem('smokeReflections', JSON.stringify(nextReflections));
-      localStorage.setItem('wishList', JSON.stringify(nextWishList));
-      localStorage.setItem('pairingTypes', JSON.stringify(nextPairingTypes));
-      localStorage.setItem('pairingLogs', JSON.stringify(nextPairingLogs));
-
-      if (nextQuickLogSelection) {
-        localStorage.setItem(
-          'quickLogSelection',
-          JSON.stringify(nextQuickLogSelection)
-        );
-      } else {
-        localStorage.removeItem('quickLogSelection');
-      }
-
       await Promise.all([
         saveSupabaseHumidors(nextHumidors),
         saveSupabaseCigars(nextCigars),
@@ -164,7 +147,7 @@ export default function SettingsPage() {
     }
   }
 
-    async function handleStartFresh() {
+      async function handleStartFresh() {
     if (resetConfirmText !== 'START FRESH') {
       setResetMessage('Type START FRESH to confirm.');
       return;
@@ -174,8 +157,6 @@ export default function SettingsPage() {
     setResetMessage('Clearing app data...');
 
     try {
-      localStorage.setItem('myCigarCellarStartFresh', 'true');
-
       setHumidors([]);
       setCigars([]);
       setSmokeLogs([]);
@@ -185,22 +166,13 @@ export default function SettingsPage() {
       setPairingLogs([]);
       setQuickLogSelection(null);
 
-      localStorage.removeItem('humidors');
-      localStorage.removeItem('cigars');
-      localStorage.removeItem('smokeLogs');
-      localStorage.removeItem('smokeReflections');
-      localStorage.removeItem('wishList');
-      localStorage.removeItem('pairingTypes');
-      localStorage.removeItem('pairingLogs');
-      localStorage.removeItem('quickLogSelection');
-
       await Promise.all([
         resetUserAppData(),
         replaceSupabaseHumidors([]),
         replaceSupabaseCigars([]),
         replaceSupabaseSmokeLogs([]),
         saveSupabaseReflections({}),
-                replaceSupabaseWishList([]),
+        replaceSupabaseWishList([]),
         saveSupabasePairingTypes([]),
         saveSupabasePairingLogs([]),
       ]);

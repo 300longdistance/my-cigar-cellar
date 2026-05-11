@@ -137,7 +137,7 @@ function detectPairingCategory(value: string): PairingCategory {
 export default function SmokeLogPage() {
   const router = useRouter();
 
-  const {
+    const {
     cigars,
     setCigars,
     smokeLogs,
@@ -147,6 +147,7 @@ export default function SmokeLogPage() {
     pairingLogs,
     setPairingLogs,
     quickLogSelection,
+    setQuickLogSelection,
   } = useCigarApp();
 
   const fallbackSelectedCigarId = cigars[0]?.id ?? 0;
@@ -421,13 +422,10 @@ const filteredPairingOptions = useMemo(() => {
       setPairingTypes(nextPairingTypes);
       setPairingLogs(nextPairingLogs);
 
-      localStorage.setItem(
-        'quickLogSelection',
-        JSON.stringify({
-          humidor: selectedCigar.humidor,
-          cigarId: selectedCigar.id,
-        })
-      );
+            setQuickLogSelection({
+        humidor: selectedCigar.humidor,
+        cigarId: selectedCigar.id,
+      });
 
       setRating(0);
       setNotes('');

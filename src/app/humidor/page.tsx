@@ -753,59 +753,85 @@ useEffect(() => {
     }
   }
 
-    function saveNewCigar() {
-    const trimmedName = draftForm.name.trim();
-    const trimmedBrand = draftForm.brand.trim();
-    const nextHumidor = draftForm.humidor.trim();
+    function toTitleCase(value: string) {
+  return value
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
-    if (!trimmedName) return;
-    if (!nextHumidor) return;
-
-    const isNewHumidor = !humidors.includes(nextHumidor);
-    const nextHumidors = isNewHumidor ? [...humidors, nextHumidor] : humidors;
-
-    const newCigar: Cigar = {
-      id: Date.now(),
-      name: trimmedName,
-      brand: trimmedBrand || 'Unknown Brand',
-      humidor: nextHumidor,
-      qty: Math.max(1, draftForm.qty || 1),
-      origin: draftForm.origin.trim() || 'Unknown',
-      wrapper: draftForm.wrapper.trim() || 'Unknown',
-      strength: draftForm.strength.trim() || 'Unknown',
-      size: draftForm.size.trim() || 'Unknown',
-      notes: draftForm.notes.trim(),
-      favorite: false,
-      image: draftForm.image,
-    };
-
-    const nextCigars = [newCigar, ...cigars];
-
-    setHumidors(nextHumidors);
-    setCigars(nextCigars);
-    setSelectedHumidor(nextHumidor);
-    setSelectedId(newCigar.id);
-    setIsCreatingNew(false);
-    setIsCigarDetailOpen(false);
-    setSearchTerm('');
-
-    setDraftForm({
-      name: newCigar.name,
-      brand: newCigar.brand,
-      humidor: newCigar.humidor,
-      qty: newCigar.qty,
-      origin: newCigar.origin,
-      wrapper: newCigar.wrapper,
-      strength: newCigar.strength,
-      size: newCigar.size,
-      notes: newCigar.notes,
-      image: newCigar.image,
-    });
+function formatCigarField(field: keyof FormState, value: string) {
+  if (field === 'notes' || field === 'image') {
+    return value.trim();
   }
 
-  function updateDraftField(updates: Partial<FormState>) {
-    setDraftForm((current) => ({ ...current, ...updates }));
-  }
+  return toTitleCase(value);
+}
+
+function saveNewCigar() {
+  const trimmedName = formatCigarField('name', draftForm.name);
+  const trimmedBrand = formatCigarField('brand', draftForm.brand);
+  const nextHumidor = formatCigarField('humidor', draftForm.humidor);
+
+  if (!trimmedName) return;
+  if (!nextHumidor) return;
+
+  const isNewHumidor = !humidors.includes(nextHumidor);
+  const nextHumidors = isNewHumidor ? [...humidors, nextHumidor] : humidors;
+
+  const newCigar: Cigar = {
+    id: Date.now(),
+    name: trimmedName,
+    brand: trimmedBrand || 'Unknown Brand',
+    humidor: nextHumidor,
+    qty: Math.max(1, draftForm.qty || 1),
+    origin: formatCigarField('origin', draftForm.origin) || 'Unknown',
+    wrapper: formatCigarField('wrapper', draftForm.wrapper) || 'Unknown',
+    strength: formatCigarField('strength', draftForm.strength) || 'Unknown',
+    size: formatCigarField('size', draftForm.size) || 'Unknown',
+    notes: draftForm.notes.trim(),
+    favorite: false,
+    image: draftForm.image,
+  };
+
+  const nextCigars = [newCigar, ...cigars];
+
+  setHumidors(nextHumidors);
+  setCigars(nextCigars);
+  setSelectedHumidor(nextHumidor);
+  setSelectedId(newCigar.id);
+  setIsCreatingNew(false);
+  setIsCigarDetailOpen(false);
+  setSearchTerm('');
+
+  setDraftForm({
+    name: newCigar.name,
+    brand: newCigar.brand,
+    humidor: newCigar.humidor,
+    qty: newCigar.qty,
+    origin: newCigar.origin,
+    wrapper: newCigar.wrapper,
+    strength: newCigar.strength,
+    size: newCigar.size,
+    notes: newCigar.notes,
+    image: newCigar.image,
+  });
+}
+
+function updateDraftField(updates: Partial<FormState>) {
+  setDraftForm((current) => ({ ...current, ...updates }));
+}
+
+function updateAndFormatDraftField(field: keyof FormState) {
+  const currentValue = draftForm[field];
+
+  if (typeof currentValue !== 'string') return;
+
+  updateDraftField({
+    [field]: formatCigarField(field, currentValue),
+  } as Partial<FormState>);
+}
 
   function updateAndSaveSelectedCigarField(updates: Partial<FormState>) {
     setDraftForm((current) => ({ ...current, ...updates }));
@@ -876,43 +902,45 @@ useEffect(() => {
   }
 
   function saveDraftToSelectedCigar() {
-    if (!selectedCigar || isCreatingNew) return;
+  if (!selectedCigar || isCreatingNew) return;
 
-    const trimmedName = draftForm.name.trim();
-    const trimmedBrand = draftForm.brand.trim();
+  const trimmedName = formatCigarField('name', draftForm.name);
+  const trimmedBrand = formatCigarField('brand', draftForm.brand);
 
-    const nextSavedForm: FormState = {
-  name: trimmedName || selectedCigar.name,
-  brand: trimmedBrand || 'Unknown Brand',
-  humidor: selectedCigar.humidor,
-  qty: Math.max(1, draftForm.qty || selectedCigar.qty),
-  origin: draftForm.origin.trim() || 'Unknown',
-  wrapper: draftForm.wrapper.trim() || 'Unknown',
-  strength: draftForm.strength.trim() || 'Unknown',
-  size: draftForm.size.trim() || 'Unknown',
-  notes: draftForm.notes.trim(),
-  image: draftForm.image ?? selectedCigar.image,
-};
+  const nextSavedForm: FormState = {
+    name: trimmedName || selectedCigar.name,
+    brand: trimmedBrand || 'Unknown Brand',
+    humidor: selectedCigar.humidor,
+    qty: Math.max(1, draftForm.qty || selectedCigar.qty),
+    origin: formatCigarField('origin', draftForm.origin) || 'Unknown',
+    wrapper: formatCigarField('wrapper', draftForm.wrapper) || 'Unknown',
+    strength: formatCigarField('strength', draftForm.strength) || 'Unknown',
+    size: formatCigarField('size', draftForm.size) || 'Unknown',
+    notes: draftForm.notes.trim(),
+    image: draftForm.image ?? selectedCigar.image,
+  };
 
-    setCigars((current) =>
-      current.map((cigar) =>
-        cigar.id === selectedCigar.id
-          ? {
-              ...cigar,
-              name: nextSavedForm.name,
-              brand: nextSavedForm.brand,
-              qty: nextSavedForm.qty,
-              origin: nextSavedForm.origin,
-              wrapper: nextSavedForm.wrapper,
-              strength: nextSavedForm.strength,
-              size: nextSavedForm.size,
-              notes: nextSavedForm.notes,
-              image: nextSavedForm.image,
-            }
-          : cigar
-      )
-    );
-  }
+  setDraftForm(nextSavedForm);
+
+  setCigars((current) =>
+    current.map((cigar) =>
+      cigar.id === selectedCigar.id
+        ? {
+            ...cigar,
+            name: nextSavedForm.name,
+            brand: nextSavedForm.brand,
+            qty: nextSavedForm.qty,
+            origin: nextSavedForm.origin,
+            wrapper: nextSavedForm.wrapper,
+            strength: nextSavedForm.strength,
+            size: nextSavedForm.size,
+            notes: nextSavedForm.notes,
+            image: nextSavedForm.image,
+          }
+        : cigar
+    )
+  );
+}
 
   function openDeleteConfirm() {
   if (!selectedCigar || isCreatingNew) return;
@@ -2269,73 +2297,77 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
 
   <div className="relative">
     <input
-      ref={newCigarWrapperRef}
-      type="text"
-      value={draftForm.wrapper}
-      onChange={(event) => {
-        updateDraftField({ wrapper: event.target.value });
+  ref={newCigarWrapperRef}
+  type="text"
+  value={draftForm.wrapper}
+  autoCapitalize="words"
+  autoCorrect="off"
+  spellCheck={false}
+  onBlur={() => updateAndFormatDraftField('wrapper')}
+  onChange={(event) => {
+    updateDraftField({ wrapper: event.target.value });
+    setIsWrapperDropdownOpen(true);
+    setNewWrapperActiveIndex(0);
+  }}
+  onFocus={() => {
+    setIsWrapperDropdownOpen(true);
+    setNewWrapperActiveIndex(0);
+  }}
+  onClick={(event) => event.stopPropagation()}
+  onKeyDown={(event) => {
+    if (event.key === 'Escape') {
+      setIsWrapperDropdownOpen(false);
+      setNewWrapperActiveIndex(0);
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+
+      if (!isWrapperDropdownOpen) {
         setIsWrapperDropdownOpen(true);
         setNewWrapperActiveIndex(0);
-      }}
-      onFocus={() => {
+        return;
+      }
+
+      if (filteredWrapperOptions.length > 0) {
+        setNewWrapperActiveIndex((current) =>
+          Math.min(current + 1, filteredWrapperOptions.length - 1)
+        );
+      }
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+
+      if (!isWrapperDropdownOpen) {
         setIsWrapperDropdownOpen(true);
         setNewWrapperActiveIndex(0);
-      }}
-      onClick={(event) => event.stopPropagation()}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          setIsWrapperDropdownOpen(false);
-          setNewWrapperActiveIndex(0);
-          return;
-        }
+        return;
+      }
 
-        if (event.key === 'ArrowDown') {
-          event.preventDefault();
+      if (filteredWrapperOptions.length > 0) {
+        setNewWrapperActiveIndex((current) => Math.max(current - 1, 0));
+      }
+      return;
+    }
 
-          if (!isWrapperDropdownOpen) {
-            setIsWrapperDropdownOpen(true);
-            setNewWrapperActiveIndex(0);
-            return;
-          }
+    if (event.key === 'Enter' && isWrapperDropdownOpen && filteredWrapperOptions.length > 0) {
+      event.preventDefault();
 
-          if (filteredWrapperOptions.length > 0) {
-            setNewWrapperActiveIndex((current) =>
-              Math.min(current + 1, filteredWrapperOptions.length - 1)
-            );
-          }
-          return;
-        }
+      const selectedOption = filteredWrapperOptions[newWrapperActiveIndex];
+      if (selectedOption) {
+        updateDraftField({ wrapper: selectedOption });
+        setIsWrapperDropdownOpen(false);
+        setNewWrapperActiveIndex(0);
+        newCigarSizeRef.current?.focus();
+      }
+      return;
+    }
 
-        if (event.key === 'ArrowUp') {
-          event.preventDefault();
-
-          if (!isWrapperDropdownOpen) {
-            setIsWrapperDropdownOpen(true);
-            setNewWrapperActiveIndex(0);
-            return;
-          }
-
-          if (filteredWrapperOptions.length > 0) {
-            setNewWrapperActiveIndex((current) => Math.max(current - 1, 0));
-          }
-          return;
-        }
-
-        if (event.key === 'Enter' && isWrapperDropdownOpen && filteredWrapperOptions.length > 0) {
-          event.preventDefault();
-
-          const selectedOption = filteredWrapperOptions[newWrapperActiveIndex];
-          if (selectedOption) {
-            updateDraftField({ wrapper: selectedOption });
-            setIsWrapperDropdownOpen(false);
-            setNewWrapperActiveIndex(0);
-            newCigarSizeRef.current?.focus();
-          }
-          return;
-        }
-
-        handleNewCigarEnterKey(event, newCigarSizeRef.current);
-      }}
+    handleNewCigarEnterKey(event, newCigarSizeRef.current);
+  }}
       className="w-full rounded-[18px] border border-[#6b4217] bg-[#101114] px-4 py-2.5 pr-10 text-[14px] text-white outline-none shadow-[0_0_0_1px_rgba(200,136,45,0.08),0_10px_30px_rgba(0,0,0,0.35)] transition placeholder:text-white/25 focus:border-[#c8882d]/60 focus:ring-1 focus:ring-[#c8882d]/20"
       placeholder="Choose or type wrapper"
       autoComplete="off"
@@ -2426,6 +2458,9 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
       ref={newCigarSizeRef}
       type="text"
       value={draftForm.size}
+       autoCapitalize="words"
+  autoCorrect="off"
+  spellCheck={false}
       onChange={(event) => {
         updateDraftField({ size: event.target.value });
         setIsSizeDropdownOpen(true);
@@ -2580,6 +2615,9 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
       ref={newCigarOriginRef}
       type="text"
       value={draftForm.origin}
+       autoCapitalize="words"
+  autoCorrect="off"
+  spellCheck={false}
       onChange={(event) => {
         updateDraftField({ origin: event.target.value });
         setIsOriginDropdownOpen(true);
@@ -2846,6 +2884,9 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
       ref={editCigarBrandRef}
       type="text"
       value={draftForm.brand}
+       autoCapitalize="words"
+  autoCorrect="off"
+  spellCheck={false}
       onChange={(event) => {
         updateDraftField({ brand: event.target.value });
         setEditBrandFilterQuery(event.target.value);
@@ -3004,6 +3045,9 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
       ref={editCigarStrengthRef}
       type="text"
       value={draftForm.strength}
+       autoCapitalize="words"
+  autoCorrect="off"
+  spellCheck={false}
       onChange={(event) => {
         updateDraftField({ strength: event.target.value });
         setEditStrengthFilterQuery(event.target.value);
@@ -3162,6 +3206,9 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
       ref={editCigarWrapperRef}
       type="text"
       value={draftForm.wrapper}
+       autoCapitalize="words"
+  autoCorrect="off"
+  spellCheck={false}
       onChange={(event) => {
         updateDraftField({ wrapper: event.target.value });
         setEditWrapperFilterQuery(event.target.value);
@@ -3320,6 +3367,9 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
       ref={editCigarSizeRef}
       type="text"
       value={draftForm.size}
+       autoCapitalize="words"
+  autoCorrect="off"
+  spellCheck={false}
       onChange={(event) => {
         updateDraftField({ size: event.target.value });
         setEditSizeFilterQuery(event.target.value);
@@ -3478,6 +3528,9 @@ async function handleNewImageChange(event: ChangeEvent<HTMLInputElement>) {
       ref={editCigarOriginRef}
       type="text"
       value={draftForm.origin}
+       autoCapitalize="words"
+  autoCorrect="off"
+  spellCheck={false}
       onChange={(event) => {
         updateDraftField({ origin: event.target.value });
         setEditOriginFilterQuery(event.target.value);

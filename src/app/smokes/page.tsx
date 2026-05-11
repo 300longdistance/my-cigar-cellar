@@ -36,15 +36,16 @@ function formatDateTime(value: string) {
 }
 
 export default function SmokesPage() {
-  const {
-  cigars,
-  setCigars,
-  smokeLogs,
-  reflections,
-  setReflections,
-  wishList,
-  setWishList,
-} = useCigarApp();
+    const {
+    cigars,
+    setCigars,
+    smokeLogs,
+    reflections,
+    setReflections,
+    wishList,
+    setWishList,
+    setQuickLogSelection,
+  } = useCigarApp();
 
   const [tab, setTab] = useState<'recent' | 'wish'>('recent');
   const [selectedLogId, setSelectedLogId] = useState<number | null>(null);
@@ -181,13 +182,10 @@ setCigars(nextCigars);
   setSelectedWishId(nextSelected?.id ?? null);
   setWishDraft(nextSelected ?? emptyWishItem);
 
-  localStorage.setItem(
-    'quickLogSelection',
-    JSON.stringify({
-      humidor: targetHumidor,
-      cigarId: newCigar.id,
-    })
-  );
+    setQuickLogSelection({
+    humidor: targetHumidor,
+    cigarId: newCigar.id,
+  });
 
   setWishMessage(`Moved to ${targetHumidor}`);
 }
